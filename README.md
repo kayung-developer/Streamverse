@@ -3,8 +3,11 @@
 Streamverse is a feature-rich, single-page video streaming application built entirely with front-end technologies (React, JavaScript, HTML, CSS) and utilizing SQLite.js for in-browser data persistence. It simulates an intelligent streaming platform with features like user authentication, multiple profiles, personalized recommendations, watch history, favorites, comments, subscription tiers, and dynamic theming.
 
 **Live Demo Note:** This application is designed to run directly in a modern web browser. Open the `app.html` file.
+![app](https://github.com/user-attachments/assets/8779d99f-65cd-4348-87d4-7f278598febf)
+
 
 ## Features
+
 
 ### Core User Experience
 *   **User Authentication:** Secure (simulated) sign-up and login functionality.
