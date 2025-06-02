@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamverse - Ultimate Video Streaming (Intelligent Edition v2.1)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Roboto:wght@400;500;700&display=swap');
+
+        :root {
+            /* Clean Light Theme (Default) */
+            --theme-primary-color: #E53935; /* A slightly softer, friendly red */
+            --theme-secondary-color: #546E7A; /* Bluish Grey for accents/secondary text */
+            --theme-background-color: #F7F9FC; /* Very light, almost white-blue */
+            --theme-card-background: #FFFFFF;
+            --theme-text-color: #263238; /* Dark Slate Grey for main text */
+            --theme-text-muted: #78909C; /* Lighter Slate Grey for muted text */
+            --theme-border-color: #CFD8DC; /* Light Grey for borders */
+            --theme-hover-brightness: 1.05; /* More subtle hover */
+            --theme-border-radius: 8px; /* Softer corners */
+            --theme-transition-speed: 0.2s ease-out;
+            --theme-box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04); /* Softer shadow */
+            --theme-font-body: 'Open Sans', sans-serif;
+            --theme-font-heading: 'Roboto', sans-serif; /* Cleaner heading font */
+
+            --premium-color: #F57C00; /* Friendly Orange for Premium */
+            --professional-color: #0288D1; /* Friendly Blue for Professional */
+        }
+
+        .dark-theme {
+            --theme-primary-color: #d40f19;
+            --theme-secondary-color: #e0e0e0;
+            --theme-background-color: #18191a; /* Slightly lighter dark */
+            --theme-card-background: #242526;
+            --theme-text-color: #E4E6EB;
+            --theme-text-muted: #B0B3B8;
+            --theme-border-color: #3A3B3C;
+            --theme-box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--theme-font-body);
+            background-color: var(--theme-background-color);
+            color: var(--theme-text-color);
+            line-height: 1.6; /* Increased for readability */
+            overflow-x: hidden;
+            transition: background-color var(--theme-transition-speed), color var(--theme-transition-speed);
+        }
+
+        #root {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .loading-spinner-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: rgba(247,249,252,0.9); /* Light theme spinner background */
+            z-index: 9999;
+        }
+        .dark-theme .loading-spinner-container {
+            background-color: rgba(0,0,0,0.9);
+        }
+
+
+        .loading-spinner {
+            border: 6px solid var(--theme-text-muted); /* Thinner border */
+            border-top: 6px solid var(--theme-primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        .loading-spinner-container p {
+            margin-top: 1rem;
+            color: var(--theme-secondary-color);
+            font-family: var(--theme-font-heading);
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: var(--theme-card-background); /* Solid background */
+            padding: 0.8rem 2rem; /* More padding */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            border-bottom: 1px solid var(--theme-border-color); /* Clear separation */
+            box-shadow: none; /* Remove initial shadow if not scrolled */
+        }
+
+        .navbar.scrolled {
+            box-shadow: var(--theme-box-shadow); /* Subtle shadow on scroll */
+        }
+
+        .navbar-brand {
+            font-family: var(--theme-font-heading);
+            font-size: 1.7rem; /* Slightly smaller */
+            font-weight: 700;
+            color: var(--theme-primary-color);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .navbar-links a, .navbar-search input, .navbar-profile button, .navbar-profile span {
+            color: var(--theme-text-muted);
+            text-decoration: none;
+            margin-left: 1.2rem; /* More spacing */
+            font-size: 0.95rem; /* Slightly larger for clarity */
+            transition: color var(--theme-transition-speed);
+            font-weight: 500;
+        }
+        .navbar-links a.active-link {
+            color: var(--theme-primary-color);
+            font-weight: 700;
+            border-bottom: 2px solid var(--theme-primary-color);
+            padding-bottom: 0.3rem;
+        }
+        .navbar-links a:hover, .navbar-profile button:hover, .navbar-profile span:hover {
+            color: var(--theme-text-color);
+        }
+
+        .navbar-search { display: flex; align-items: center; }
+        .navbar-search input {
+            background-color: var(--theme-background-color); /* Match page background */
+            border: 1px solid var(--theme-border-color);
+            padding: 0.5rem 0.9rem; /* More padding */
+            border-radius: var(--theme-border-radius);
+            color: var(--theme-text-color);
+            width: 220px;
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
+            font-size: 0.9rem;
+        }
+        .navbar-search input:focus {
+            background-color: var(--theme-card-background);
+            width: 280px;
+            outline: none;
+            border-color: var(--theme-primary-color);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-primary-color) 20%, transparent);
+        }
+
+        .navbar-profile { display: flex; align-items: center; }
+        .navbar-profile button { background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0.3rem;}
+        .navbar-profile i { font-size: 1.4rem; }
+        .navbar-profile .profile-avatar {
+            width: 36px; height: 36px; border-radius: 50%; margin-left: 0.5rem; border: 2px solid var(--theme-border-color);
+            object-fit: cover;
+        }
+        .navbar-profile span { cursor: pointer; }
+
+
+        /* Hero Section */
+        .hero-section {
+            height: 75vh; /* Slightly less tall */
+            background-size: cover;
+            background-position: center 30%; /* Adjust focus */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 3rem;
+            position: relative;
+            margin-top: 0; /* Adjusted since navbar is fixed */
+            padding-top: 80px; /* Navbar height */
+        }
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+             /* Softer gradient, more focus on content */
+            background: linear-gradient(to bottom, rgba(247,249,252,0) 0%, rgba(247,249,252,0.6) 70%, var(--theme-background-color) 100%),
+                        linear-gradient(to right, rgba(247,249,252,0.5) 0%, rgba(247,249,252,0) 70%);
+        }
+        .dark-theme .hero-section::before { /* Keep dark theme gradient distinct if used */
+             background: linear-gradient(to bottom, rgba(16,16,16,0) 0%, rgba(16,16,16,0.8) 70%, var(--theme-background-color) 100%),
+                        linear-gradient(to right, rgba(16,16,16,0.6) 0%, rgba(16,16,16,0) 60%);
+        }
+
+        .hero-content { position: relative; z-index: 1; max-width: 50%; }
+        .hero-title {
+            font-family: var(--theme-font-heading);
+            font-size: 2.8rem; /* Slightly smaller */
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--theme-text-color);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Very subtle shadow */
+        }
+        .hero-description {
+            font-size: 1.05rem; margin-bottom: 1.5rem; line-height: 1.6; max-width: 600px;
+            color: var(--theme-secondary-color);
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
+        }
+        .hero-buttons .btn {
+            padding: 0.8rem 2rem; margin-right: 1rem;
+            border-radius: var(--theme-border-radius); font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all var(--theme-transition-speed);
+            box-shadow: var(--theme-box-shadow);
+            border: none; /* Remove border for cleaner look */
+        }
+        .hero-buttons .btn-play { background-color: var(--theme-primary-color); color: #fff; }
+        .hero-buttons .btn-play:hover { background-color: color-mix(in srgb, var(--theme-primary-color), #000 10%); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .hero-buttons .btn-info { background-color: var(--theme-card-background); color: var(--theme-text-color); border: 1px solid var(--theme-border-color); }
+        .hero-buttons .btn-info:hover { background-color: color-mix(in srgb, var(--theme-card-background), #000 5%); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .hero-buttons .btn i { margin-right: 0.5rem; }
+
+        /* Video Row */
+        .video-row-container {
+            padding: 0 2rem 2rem 2rem; /* More horizontal padding */
+            margin-top: -50px; /* Overlap with hero's bottom gradient */
+            position: relative;
+            z-index: 10;
+        }
+        .video-row-container.first-row { margin-top: 1rem; } /* Less negative margin if first actual row */
+        .video-row-container.static-page-row { margin-top: 2rem; }
+
+        .video-row-title {
+            font-family: var(--theme-font-heading);
+            font-size: 1.5rem; /* Larger, clearer title */
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-left: 0; /* Align with container padding */
+            color: var(--theme-text-color);
+        }
+        .video-row {
+            display: flex; overflow-x: auto; overflow-y: hidden; padding: 0.5rem 0 1rem 0; /* Adjust padding */
+            scrollbar-width: thin; scrollbar-color: var(--theme-primary-color) var(--theme-background-color);
+        }
+        .video-row::-webkit-scrollbar { height: 10px; }
+        .video-row::-webkit-scrollbar-track { background: var(--theme-background-color); border-radius: var(--theme-border-radius); }
+        .video-row::-webkit-scrollbar-thumb { background-color: var(--theme-border-color); border-radius: var(--theme-border-radius); border: 2px solid var(--theme-background-color); }
+        .video-row::-webkit-scrollbar-thumb:hover { background-color: var(--theme-secondary-color); }
+
+
+        /* Video Card */
+        .video-card {
+            background-color: var(--theme-card-background);
+            border-radius: var(--theme-border-radius);
+            border: 1px solid var(--theme-border-color);
+            margin-right: 1rem; /* More spacing */
+            min-width: 250px; width: 250px; /* Slightly wider */
+            overflow: hidden; cursor: pointer;
+            transition: transform var(--theme-transition-speed), box-shadow var(--theme-transition-speed);
+            position: relative;
+            box-shadow: var(--theme-box-shadow);
+        }
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1), 0 3px 6px rgba(0,0,0,0.08); /* Enhanced hover shadow */
+            z-index: 20;
+        }
+        .video-thumbnail { width: 100%; height: 140px; object-fit: cover; display: block; border-bottom: 1px solid var(--theme-border-color); }
+        .video-card-progress-bar {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 5px; background-color: rgba(0,0,0,0.1);
+        }
+        .video-card-progress { height: 100%; background-color: var(--theme-primary-color); }
+        .video-card-content { padding: 1rem; } /* More padding */
+        .video-card-title {
+            font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 0.3rem;
+            color: var(--theme-text-color);
+        }
+        .video-card-meta { font-size: 0.8rem; color: var(--theme-text-muted); display: flex; justify-content: space-between; margin-bottom: 0.5rem;}
+        .video-card-actions { display: flex; justify-content: space-between; padding-top: 0.5rem; align-items: center; }
+        .video-card-actions button {
+            background-color: transparent; border: 1px solid var(--theme-border-color); color: var(--theme-text-muted);
+            border-radius: var(--theme-border-radius); width: 30px; height: 30px; font-size: 0.8rem; cursor: pointer;
+            transition: all var(--theme-transition-speed); display: flex; align-items: center; justify-content: center;
+        }
+        .video-card-actions button:hover { color: var(--theme-primary-color); border-color: var(--theme-primary-color); background-color: color-mix(in srgb, var(--theme-primary-color) 10%, transparent); }
+        .video-card-actions button.favorited { color: var(--theme-primary-color); border-color: var(--theme-primary-color); background-color: color-mix(in srgb, var(--theme-primary-color) 15%, transparent); }
+        .video-card-actions .views-count { font-size: 0.75rem; color: var(--theme-text-muted); }
+
+
+        /* Player Page */
+        .player-page-container { padding: 80px 2rem 2rem 2rem; display: flex; flex-direction: column; align-items: center; }
+        .video-player-wrapper {
+            width: 100%; max-width: 960px; aspect-ratio: 16 / 9; background-color: #000;
+            margin-bottom: 2rem; border-radius: var(--theme-border-radius); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.15); /* Slightly more prominent shadow for player */
+            border: 1px solid var(--theme-border-color);
+        }
+        .video-player-wrapper video { width: 100%; height: 100%; display: block; }
+        .video-details-container { width: 100%; max-width: 960px; text-align: left; padding: 1.5rem; background-color: var(--theme-card-background); border: 1px solid var(--theme-border-color); border-radius: var(--theme-border-radius); box-shadow: var(--theme-box-shadow); }
+        .video-details-title { font-family: var(--theme-font-heading); font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--theme-text-color);}
+        .video-details-meta { font-size: 0.95rem; color: var(--theme-text-muted); margin-bottom: 1rem; }
+        .video-details-meta span { margin-right: 1rem; }
+        .video-details-description { font-size: 1rem; line-height: 1.7; margin-bottom: 1.5rem; color: var(--theme-secondary-color);}
+        .video-player-actions { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.8rem; }
+        .video-player-actions button {
+            padding: 0.7rem 1.4rem; border: 1px solid var(--theme-border-color);
+            border-radius: var(--theme-border-radius); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            transition: all var(--theme-transition-speed); background-color: var(--theme-background-color); color: var(--theme-text-color);
+            box-shadow: var(--theme-box-shadow);
+        }
+        .video-player-actions button:hover { background-color: color-mix(in srgb, var(--theme-background-color), #000 5%); border-color: var(--theme-secondary-color); }
+        .video-player-actions button.favorited { background-color: var(--theme-primary-color); color: #fff; border-color: var(--theme-primary-color); }
+        .video-player-actions button.favorited:hover { background-color: color-mix(in srgb, var(--theme-primary-color), #000 10%); }
+        .video-player-actions button .icon { margin-right: 0.5rem; }
+        .video-player-actions .placeholder-btn { opacity: 0.7; cursor: not-allowed; background-color: var(--theme-border-color); color: var(--theme-text-muted); }
+
+        /* Comments Section */
+        .comments-section { margin-top: 2rem; }
+        .comments-section h3 { font-family: var(--theme-font-heading); font-size: 1.4rem; margin-bottom: 1rem; border-bottom: 1px solid var(--theme-border-color); padding-bottom: 0.5rem; font-weight: 600; color: var(--theme-text-color); }
+        .comment-form textarea {
+            width: 100%; padding: 0.8rem; margin-bottom: 0.8rem; background-color: var(--theme-card-background);
+            border: 1px solid var(--theme-border-color); border-radius: var(--theme-border-radius); color: var(--theme-text-color); font-size: 0.95rem; line-height: 1.5;
+        }
+        .comment-form textarea:focus { border-color: var(--theme-primary-color); box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-primary-color) 20%, transparent); outline: none;}
+        .comment-form button {
+            padding: 0.7rem 1.5rem; background-color: var(--theme-primary-color); color: #fff; border: none;
+            border-radius: var(--theme-border-radius); font-weight: 600; cursor: pointer; transition: background-color var(--theme-transition-speed); font-size: 0.95rem;
+        }
+        .comment-form button:hover { background-color: color-mix(in srgb, var(--theme-primary-color), #000 10%); }
+        .comment-list .comment {
+            background-color: var(--theme-card-background); border: 1px solid var(--theme-border-color);
+            padding: 1rem; margin-bottom: 0.8rem; border-radius: var(--theme-border-radius);
+        }
+        .comment-author { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.3rem; color: var(--theme-text-color); }
+        .comment-author img { width: 30px; height: 30px; border-radius: 50%; vertical-align: middle; margin-right: 0.5rem; }
+        .comment-text { font-size: 0.95rem; margin-bottom: 0.3rem; line-height: 1.6; color: var(--theme-secondary-color);}
+        .comment-meta { font-size: 0.8rem; color: var(--theme-text-muted); }
+
+        /* Search Results Page & Generic Page Styles */
+        .search-results-container, .page-container { padding: 80px 2rem 2rem 2rem; } /* Added .page-container */
+        .search-results-title, .page-title {
+            font-family: var(--theme-font-heading); font-size: 2rem; font-weight: 700;
+            margin-bottom: 2rem; padding-left: 0; border-bottom: 3px solid var(--theme-primary-color); display: inline-block;
+            color: var(--theme-text-color);
+        }
+        .search-results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; padding: 0; }
+        .search-results-grid .video-card { margin-right: 0; }
+        .no-results { text-align: center; font-size: 1.2rem; color: var(--theme-text-muted); margin-top: 3rem; }
+
+        /* Placeholder page content */
+        .placeholder-page-content {
+            padding: 2rem 0;
+            text-align: center;
+            color: var(--theme-text-muted);
+        }
+        .placeholder-page-content h2 {
+            font-size: 2.2rem;
+            color: var(--theme-text-color);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        .placeholder-page-content p {
+            font-size: 1.15rem;
+            margin-bottom: 2rem;
+        }
+
+
+        /* Modal (Auth, Profile Selection, Payment) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(38,50,56,0.6); /* Dark slate grey overlay */
+            display: flex; justify-content: center; align-items: center; z-index: 2000;
+            backdrop-filter: blur(4px);
+        }
+        .dark-theme .modal-overlay { background-color: rgba(0,0,0,0.7); }
+
+        .modal-content {
+            background-color: var(--theme-card-background); padding: 2rem; border-radius: var(--theme-border-radius);
+            border: 1px solid var(--theme-border-color); width: 90%; max-width: 480px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); position: relative;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .modal-close-btn {
+            position: absolute; top: 1rem; right: 1rem; background: none; border: none;
+            color: var(--theme-text-muted); font-size: 1.5rem; cursor: pointer; padding: 0.2rem;
+        }
+        .modal-close-btn:hover { color: var(--theme-text-color); }
+        .modal-title { font-family: var(--theme-font-heading); font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center; font-weight: 600; color: var(--theme-text-color);}
+        .modal-form input, .modal-form select, .modal-form textarea {
+            width: 100%; padding: 0.8rem; margin-bottom: 1rem; background-color: var(--theme-background-color);
+            border: 1px solid var(--theme-border-color); border-radius: var(--theme-border-radius); color: var(--theme-text-color); font-size: 1rem;
+        }
+        .modal-form input:focus, .modal-form select:focus, .modal-form textarea:focus {
+            outline: none; border-color: var(--theme-primary-color);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-primary-color) 20%, transparent);
+        }
+        .modal-form button { /* Already uses .general-button like style effectively */
+            width: 100%; padding: 0.8rem; background-color: var(--theme-primary-color); color: #fff;
+            border: none; border-radius: var(--theme-border-radius); font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: background-color var(--theme-transition-speed);
+        }
+        .modal-form button:hover { background-color: color-mix(in srgb, var(--theme-primary-color), #000 10%); }
+        .modal-form button:disabled { background-color: var(--theme-text-muted); cursor: not-allowed; }
+        .modal-switch-auth { text-align: center; margin-top: 1rem; font-size: 0.9rem; }
+        .modal-switch-auth button {
+            background: none; border: none; color: var(--theme-primary-color); cursor: pointer; font-weight: 700; padding: 0.3rem; font-size: 0.9rem;
+        }
+        .modal-error { color: #D32F2F; font-size: 0.9rem; text-align: center; margin-bottom: 1rem; background-color: color-mix(in srgb, #D32F2F 10%, transparent); padding: 0.5rem; border-radius: var(--theme-border-radius); }
+        .modal-success { color: #388E3C; font-size: 0.9rem; text-align: center; margin-bottom: 1rem; background-color: color-mix(in srgb, #388E3C 10%, transparent); padding: 0.5rem; border-radius: var(--theme-border-radius);}
+
+
+        /* Profile Selection Modal */
+        .profile-selection-list { list-style: none; padding: 0; margin: 0; }
+        .profile-selection-item {
+            display: flex; align-items: center; padding: 1rem; margin-bottom: 0.8rem;
+            background-color: var(--theme-background-color); border: 1px solid var(--theme-border-color);
+            border-radius: var(--theme-border-radius); cursor: pointer; transition: background-color var(--theme-transition-speed), border-color var(--theme-transition-speed);
+        }
+        .profile-selection-item:hover { background-color: color-mix(in srgb, var(--theme-background-color), #000 3%); border-color: var(--theme-secondary-color);}
+        .profile-selection-item img { width: 45px; height: 45px; border-radius: 50%; margin-right: 1rem; object-fit: cover; border: 1px solid var(--theme-border-color);}
+        .profile-selection-item span { font-size: 1.1rem; font-weight: 600; color: var(--theme-text-color);}
+        .profile-create-btn { margin-top: 1.5rem; } /* Uses .general-button style */
+
+        /* Settings Page */
+        .settings-page-container { padding: 90px 2rem 2rem 2rem; max-width: 900px; margin: 0 auto; } /* Ensure enough top padding */
+        .settings-section {
+            background-color: var(--theme-card-background); border: 1px solid var(--theme-border-color);
+            padding: 2rem; border-radius: var(--theme-border-radius); margin-bottom: 2rem; box-shadow: var(--theme-box-shadow);
+        }
+        .settings-section h2 {
+            font-family: var(--theme-font-heading); font-size: 1.6rem; margin-bottom: 1.5rem; font-weight: 600;
+            padding-bottom: 0.8rem; border-bottom: 1px solid var(--theme-border-color); color: var(--theme-text-color);
+        }
+        .settings-section h2 .fas { margin-right: 0.8rem; color: var(--theme-primary-color);}
+        .settings-form-group { margin-bottom: 1.2rem; }
+        .settings-form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--theme-secondary-color); }
+        .settings-form-group input, .settings-form-group select {
+            width: 100%; padding: 0.7rem; background-color: var(--theme-background-color);
+            border: 1px solid var(--theme-border-color); border-radius: var(--theme-border-radius); color: var(--theme-text-color); font-size: 0.95rem;
+        }
+        .settings-form-group input:focus, .settings-form-group select:focus {
+             outline: none; border-color: var(--theme-primary-color);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-primary-color) 20%, transparent);
+        }
+        .settings-form-group input[type="checkbox"] { width: auto; margin-right: 0.5rem; transform: scale(1.1); }
+
+        .settings-page-container button.general-button, .general-button { /* General Button Style applied */
+             padding: 0.7rem 1.5rem; background-color: var(--theme-primary-color); color: #fff; border: none;
+            border-radius: var(--theme-border-radius); font-weight: 600; cursor: pointer; transition: background-color var(--theme-transition-speed), transform 0.1s ease-out;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem;
+        }
+         .settings-page-container button.general-button:hover, .general-button:hover {
+             background-color: color-mix(in srgb, var(--theme-primary-color), #000 10%);
+             transform: translateY(-1px);
+         }
+         .general-button .fas { margin-right: 0.6rem; }
+         .theme-toggle-btn {
+            font-size: 1.3rem; margin-left: 1rem; background: none; border: none; color: var(--theme-text-muted); cursor: pointer; padding: 0.3rem;
+         }
+         .theme-toggle-btn:hover { color: var(--theme-text-color); }
+        .subscription-badge {
+            padding: 0.3rem 0.6rem; font-size: 0.85em; border-radius: var(--theme-border-radius);
+            color: white; margin-left: 0.5rem; font-weight: 600;
+        }
+        .subscription-badge.basic { background-color: var(--theme-text-muted); color: var(--theme-background-color); }
+        .subscription-badge.premium { background-color: var(--premium-color); }
+        .subscription-badge.professional { background-color: var(--professional-color); }
+
+
+        /* Placeholder for Advanced Features */
+        .placeholder-info {
+            font-size: 0.85rem; color: var(--theme-text-muted); margin-top: 1rem; padding: 1rem;
+            border-left: 4px solid var(--theme-primary-color); background-color: color-mix(in srgb, var(--theme-background-color), #000 2%); border-radius: 0 var(--theme-border-radius) var(--theme-border-radius) 0;
+        }
+        .dark-theme .placeholder-info { background-color: rgba(255,255,255,0.03); }
+        .placeholder-info strong { color: var(--theme-text-color); font-weight: 600; }
+        .placeholder-info ul { margin-top: 0.5rem; padding-left: 1.2rem;}
+        .placeholder-info ul li { margin-bottom: 0.3rem;}
+
+
+        /* Subscription Page */
+        .subscription-page-container { padding: 90px 2rem 2rem 2rem; }
+        .subscription-tiers { display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; margin-top: 2rem; }
+        .subscription-card {
+            background-color: var(--theme-card-background); border: 1px solid var(--theme-border-color);
+            border-radius: var(--theme-border-radius); padding: 2rem; width: 100%; max-width: 340px;
+            box-shadow: var(--theme-box-shadow); text-align: center; display: flex; flex-direction: column;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .subscription-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.06);
+        }
+
+        .subscription-card h3 {
+            font-family: var(--theme-font-heading); font-size: 2rem; margin-bottom: 0.5rem; font-weight: 700;
+        }
+        .subscription-card .price { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.3rem; color: var(--theme-primary-color); }
+        .subscription-card .price span { font-size: 1rem; color: var(--theme-text-muted); }
+        .subscription-card .current-plan-indicator {
+            font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: var(--theme-border-radius);
+            background-color: var(--theme-primary-color); color: #fff; display: inline-block; margin-bottom: 1rem; font-weight: 600;
+        }
+        .subscription-card ul { list-style: none; padding: 0; margin: 1.5rem 0; text-align: left; color: var(--theme-secondary-color); flex-grow: 1; }
+        .subscription-card ul li { margin-bottom: 0.6rem; font-size: 0.95rem; line-height: 1.5; }
+        .subscription-card ul li .fas { color: var(--theme-primary-color); margin-right: 0.8rem; width: 18px; text-align: center; }
+        .subscription-card button { width: 100%; margin-top: auto; font-size: 1rem; padding: 0.8rem 1.5rem; } /* Uses .general-button */
+        .subscription-card.basic h3 { color: var(--theme-text-color); }
+        .subscription-card.premium h3 { color: var(--premium-color); }
+        .subscription-card.premium { border-top: 5px solid var(--premium-color); }
+        .subscription-card.professional h3 { color: var(--professional-color); }
+        .subscription-card.professional { border-top: 5px solid var(--professional-color); }
+
+
+        /* Payment Modal Specific Styles */
+        .payment-modal-content { max-width: 500px; }
+        .payment-method-selection { display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .payment-method-btn {
+            padding: 0.9rem 1.3rem; border: 1px solid var(--theme-border-color);
+            background-color: var(--theme-background-color); color: var(--theme-text-color);
+            border-radius: var(--theme-border-radius); cursor: pointer; font-weight: 600;
+            transition: all var(--theme-transition-speed); flex: 1; font-size: 0.95rem;
+        }
+        .payment-method-btn:hover { border-color: var(--theme-secondary-color); background-color: color-mix(in srgb, var(--theme-background-color), #000 5%); }
+        .payment-method-btn.active { border-color: var(--theme-primary-color); background-color: var(--theme-primary-color); color: #fff; }
+        .payment-method-btn .fab, .payment-method-btn .fas { margin-right: 0.6rem; }
+        .payment-form-group { display: flex; gap: 0.8rem; margin-bottom: 1rem; }
+        .payment-form-group input { flex: 1; }
+        .google-pay-btn-container { text-align: center; }
+        .google-pay-btn { /* Styles for a generic button, actual GPay button has specific branding */
+            background-color: #4285F4; color: #fff; border: none; padding: 0.9rem 1.8rem;
+            border-radius: var(--theme-border-radius); font-size: 1rem; cursor: pointer; font-weight: 600;
+            display: inline-flex; align-items: center; transition: background-color 0.2s;
+        }
+        .google-pay-btn:hover { background-color: #3367D6; }
+        .google-pay-btn img { height: 22px; margin-right: 1rem; }
+        .order-summary {
+            background-color: var(--theme-background-color); padding: 1.2rem; border-radius: var(--theme-border-radius);
+            border: 1px solid var(--theme-border-color); margin-bottom: 1.5rem;
+        }
+        .order-summary h4 { font-family: var(--theme-font-heading); font-size: 1.2rem; margin-bottom: 0.8rem; font-weight: 600; color: var(--theme-text-color);}
+        .order-summary p { font-size: 0.95rem; margin-bottom: 0.4rem; display: flex; justify-content: space-between; color: var(--theme-secondary-color); }
+        .order-summary p strong { font-weight: 600; color: var(--theme-text-color); }
+
+
+        /* Footer */
+        .footer {
+            text-align: center; padding: 2rem; background-color: var(--theme-card-background);
+            border-top: 1px solid var(--theme-border-color); color: var(--theme-text-muted); font-size: 0.9rem; margin-top: auto;
+        }
+        .footer p { margin-bottom: 0.5rem; }
+        .footer a { color: var(--theme-primary-color); text-decoration: none; font-weight: 600; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* Utility Classes */
+        .text-primary { color: var(--theme-primary-color); }
+        .mt-1 { margin-top: 1rem; } .mt-2 { margin-top: 2rem; }
+        .mb-1 { margin-bottom: 1rem; } .mb-2 { margin-bottom: 2rem; }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .navbar { padding: 0.7rem 1rem; }
+            .navbar-brand { font-size: 1.5rem; }
+            .navbar-links { display: none; } /* Consider a hamburger menu for these */
+            .navbar-search input { width: 150px; }
+            .navbar-search input:focus { width: 200px; }
+
+            .hero-section { height: auto; min-height: 60vh; padding: 80px 1.5rem 2rem 1.5rem; }
+            .hero-content { max-width: 100%; text-align: center;}
+            .hero-title { font-size: 2.2rem; }
+            .hero-description { font-size: 1rem; -webkit-line-clamp: 4; }
+             .hero-buttons { display: flex; flex-direction: column; gap: 0.8rem; align-items: center;}
+             .hero-buttons .btn { width: 100%; max-width: 300px; margin-right: 0;}
+
+
+            .video-row-container { padding: 0 1rem 1.5rem 1rem; margin-top: 1rem; }
+            .video-row-title { font-size: 1.3rem; }
+            .video-card { min-width: 200px; width: 200px; }
+            .video-thumbnail { height: 112px; }
+
+            .player-page-container, .search-results-container, .settings-page-container, .subscription-page-container, .page-container { padding: 80px 1rem 1rem 1rem; }
+            .video-details-title { font-size: 1.8rem; }
+            .page-title { font-size: 1.6rem;}
+            .subscription-tiers { flex-direction: column; align-items: center; }
+            .subscription-card { max-width: 100%; }
+            .settings-section { padding: 1.5rem; }
+        }
+         @media (max-width: 480px) {
+            .payment-method-selection { flex-direction: column; }
+            .video-card { min-width: 100%; width: 100%; margin-right: 0; margin-bottom: 1rem; } /* Stack cards on small screens */
+            .video-row { flex-direction: column; }
+            .hero-title { font-size: 2rem; }
+            .hero-description { font-size: 0.95rem; }
+            .modal-content {padding: 1.5rem;}
+            .modal-title {font-size: 1.5rem;}
+         }
+        /* Notification System Styles */
+        .app-notification-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000; /* Very high z-index */
+            display: flex;
+            flex-direction: column-reverse; /* New notifications appear on top */
+            gap: 12px;
+            max-width: 380px;
+        }
+
+        .app-notification {
+            background-color: var(--theme-card-background);
+            color: var(--theme-text-color);
+            padding: 1rem 1.2rem;
+            border-radius: var(--theme-border-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: flex-start; /* Align icon and text nicely */
+            gap: 0.8rem;
+            animation: notification-slide-in 0.3s ease-out;
+            border-left: 5px solid var(--theme-secondary-color); /* Default border color */
+        }
+        .dark-theme .app-notification {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .app-notification.info {
+            border-left-color: #0288D1; /* Blue for info - Friendly Blue */
+        }
+        .app-notification.success {
+            border-left-color: #388E3C; /* Green for success */
+        }
+        .app-notification.warning {
+            border-left-color: #F57C00; /* Orange for warning - Friendly Orange */
+        }
+        .app-notification.error {
+            border-left-color: #D32F2F; /* Red for error */
+        }
+
+        .app-notification-icon {
+            font-size: 1.3rem;
+            margin-top: 2px; /* Align with text */
+        }
+        .app-notification.info .app-notification-icon { color: #0288D1; }
+        .app-notification.success .app-notification-icon { color: #388E3C; }
+        .app-notification.warning .app-notification-icon { color: #F57C00; }
+        .app-notification.error .app-notification-icon { color: #D32F2F; }
+
+
+        .app-notification-content {
+            flex-grow: 1;
+        }
+        .app-notification-content strong { /* Optional title */
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 1.05em;
+        }
+        .app-notification-content p {
+            margin: 0;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .app-notification-dismiss {
+            background: none;
+            border: none;
+            color: var(--theme-text-muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0.2rem;
+            margin-left: 0.5rem;
+            opacity: 0.7;
+            transition: opacity var(--theme-transition-speed);
+        }
+        .app-notification-dismiss:hover {
+            opacity: 1;
+            color: var(--theme-text-color);
+        }
+
+        @keyframes notification-slide-in {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes notification-fade-out { /* For programmatic dismiss if needed later */
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+        }
+    </style>
+</head>
+<body data-theme="dark"> <!-- Default theme can be set here -->
+    <div id="root">
+        <div class="loading-spinner-container">
+            <div class="loading-spinner"></div>
+            <p>Initializing Streamverse Intelligent Engine v2.1</p>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect, createContext, useContext, useRef, useCallback } = React; // Added useCallback
+
+        // --- Configuration & Enhanced Sample Data ---
+        const DB_NAME = "streamverse_intelligent_v2.1.db";
+        const SQL_WASM_PATH = "https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm";
+        const DEFAULT_AVATAR = "https://picsum.photos/seed/avatar/50/50";
+
+        const sampleVideos = [
+            { id: "bigbuckbunny", title: "Big Buck Bunny", description: "A large and lovable rabbit deals with three mischievous rodents.", thumbnailUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/800px-Big_buck_bunny_poster_big.jpg", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", genre: "Animation", type: "Movie", duration: "10 min", rating: 4.5, year: 2008, uploader: "Blender Foundation", uploadDate: "2008-05-10", tags: ["animation", "comedy", "short"], contentRating: "G" },
+            { id: "elephantsdream", title: "Elephants Dream", description: "Two strange characters explore a surreal, dream-like machine.", thumbnailUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Elephants_Dream_s5_proog.jpg/800px-Elephants_Dream_s5_proog.jpg", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4", genre: "Animation", type: "Movie", duration: "11 min", rating: 4.2, year: 2006, uploader: "Blender Foundation", uploadDate: "2006-03-20", tags: ["animation", "sci-fi", "surreal"], contentRating: "PG" },
+            { id: "forbiggerblazes", title: "For Bigger Blazes", description: "A dramatic firefighting scene.", thumbnailUrl: "https://i.ytimg.com/vi/d-h21m3_nKk/maxresdefault.jpg", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4", genre: "Action", type: "Short", duration: "15 sec", rating: 3.9, year: 2012, uploader: "Google", uploadDate: "2012-08-01", tags: ["action", "short"], contentRating: "G" },
+            { id: "sintel", title: "Sintel", description: "A young woman's quest to find her pet dragon.", thumbnailUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Sintel_poster_EN.jpg/800px-Sintel_poster_EN.jpg", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", genre: "Fantasy", type: "Movie", duration: "15 min", rating: 4.8, year: 2010, uploader: "Blender Foundation", uploadDate: "2010-09-27", tags: ["fantasy", "animation", "dragon"], contentRating: "PG" },
+            { id: "tears_of_steel", title: "Tears of Steel", description: "Sci-fi short film about warriors and scientists.", thumbnailUrl: "https://mango.blender.org/wp-content/uploads/2013/05/01_thom_celia_bridge.jpg", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4", genre: "Sci-Fi", type: "Short", duration: "12 min", rating: 4.6, year: 2012, uploader: "Blender Institute", uploadDate: "2012-09-26", tags: ["sci-fi", "live-action", "vfx"], contentRating: "PG-13" },
+            { id: "cosmos_laundromat", title: "Cosmos Laundromat", description: "A suicidal sheep finds a new chance at life.", thumbnailUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Cosmos_Laundromat_poster.jpg/800px-Cosmos_Laundromat_poster.jpg", videoUrl: "https://media.w3.org/2010/05/sintel/trailer.mp4", genre: "Animation", type: "Short", duration: "13 min", rating: 4.7, year: 2015, uploader: "Blender Institute", uploadDate: "2015-08-10", tags: ["animation", "dark-comedy", "short"], contentRating: "PG-13" },
+            { id: "nature_beauty", title: "Nature's Beauty", description: "Explore breathtaking landscapes.", thumbnailUrl: "https://picsum.photos/seed/nature1/400/225", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4", genre: "Documentary", type: "TV Show", duration: "5 min", rating: 4.9, year: 2023, uploader: "Discovery Films", uploadDate: "2023-01-15", tags: ["nature", "travel", "scenic"], contentRating: "G" },
+            { id: "city_lights", title: "City Lights at Night", description: "Mesmerizing journey through cityscapes.", thumbnailUrl: "https://picsum.photos/seed/city1/400/225", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4", genre: "Travel", type: "TV Show", duration: "8 min", rating: 4.3, year: 2022, uploader: "Urban Explorers", uploadDate: "2022-11-05", tags: ["city", "travel", "night"], contentRating: "G" },
+            { id: "tech_talks_ep1", title: "Future of AI", description: "Episode 1 of Tech Talks, exploring AI advancements.", thumbnailUrl: "https://picsum.photos/seed/techtalk1/400/225", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4", genre: "Technology", type: "TV Show", duration: "22 min", rating: 4.6, year: 2024, uploader: "Tech Insights", uploadDate: "2024-01-10", tags: ["ai", "technology", "future"], contentRating: "G" },
+            { id: "cooking_show_s1e1", title: "Mastering Pasta", description: "Learn to make perfect pasta from scratch.", thumbnailUrl: "https://picsum.photos/seed/cooking1/400/225", videoUrl: "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4", genre: "Cooking", type: "TV Show", duration: "18 min", rating: 4.7, year: 2023, uploader: "Culinary Masters", uploadDate: "2023-09-05", tags: ["cooking", "food", "pasta", "tutorial"], contentRating: "G" },
+        ];
+
+        const CONTENT_RATINGS_ORDER = ["G", "PG", "PG-13", "R", "NC-17"];
+        const SUBSCRIPTION_TIERS = {
+            BASIC: { id: 'Basic', name: 'Basic', pricePerMonth: 0, pricePerYear: 0, features: ["Access to select free content", "SD Streaming Quality", "Limited Downloads", "Ads Supported"] },
+            PREMIUM: { id: 'Premium', name: 'Premium', pricePerMonth: 9.99, pricePerYear: 99.99, features: ["Access to all content", "HD Streaming Quality (1080p)", "Standard Downloads", "Ad-Free Viewing", "2 Concurrent Streams"] },
+            PROFESSIONAL: { id: 'Professional', name: 'Professional', pricePerMonth: 19.99, pricePerYear: 199.99, features: ["All Premium features", "4K Ultra HD Streaming", "Enhanced Downloads (Offline)", "Early Access to new releases", "4 Concurrent Streams", "Exclusive Content & Behind-the-Scenes"] }
+        };
+
+
+        // --- Context API for Global State ---
+        const AppContext = createContext();
+
+        // --- Database Service (SQLite for JS) ---
+        const DatabaseService = () => {
+            let db = null;
+
+            const initDb = async () => {
+                try {
+                    const SQL = await initSqlJs({ locateFile: file => SQL_WASM_PATH });
+                    const savedDb = localStorage.getItem(DB_NAME);
+                    if (savedDb) {
+                        const byteArray = Uint8Array.from(JSON.parse(savedDb));
+                        db = new SQL.Database(byteArray);
+                    } else {
+                        db = new SQL.Database();
+                        await createSchema();
+                        await populateInitialData();
+                        saveDb();
+                    }
+                    return true;
+                } catch (err) {
+                    console.error("SQLite initialization error:", err);
+                    return false;
+                }
+            };
+
+            const saveDb = () => {
+                if (db) {
+                    try {
+                        const binaryArray = db.export();
+                        localStorage.setItem(DB_NAME, JSON.stringify(Array.from(binaryArray)));
+                    } catch (e) { console.error("Failed to save database to localStorage:", e); }
+                }
+            };
+
+            const createSchema = async () => {
+                db.exec(`
+                    CREATE TABLE IF NOT EXISTS videos (
+                        id TEXT PRIMARY KEY, title TEXT, description TEXT, thumbnailUrl TEXT, videoUrl TEXT,
+                        genre TEXT, type TEXT DEFAULT 'Movie', duration TEXT, rating REAL, year INTEGER,
+                        uploader TEXT, uploadDate TEXT, views INTEGER DEFAULT 0, tags TEXT, contentRating TEXT DEFAULT 'G'
+                    );
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, email TEXT UNIQUE, passwordHash TEXT,
+                        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                    CREATE TABLE IF NOT EXISTS profiles (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, userId INTEGER, profileName TEXT, avatar TEXT,
+                        isChild INTEGER DEFAULT 0, parentalControlLevel TEXT DEFAULT 'NC-17', /* Kept for direct access if needed, but preferences is primary */
+                        preferences TEXT, /* JSON for theme, parentalControlLevel, notifications, playback etc. */
+                        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE(userId, profileName),
+                        FOREIGN KEY(userId) REFERENCES users(id)
+                    );
+                    CREATE TABLE IF NOT EXISTS watch_history (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, profileId INTEGER, videoId TEXT,
+                        watchedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, progress REAL DEFAULT 0,
+                        FOREIGN KEY(profileId) REFERENCES profiles(id), FOREIGN KEY(videoId) REFERENCES videos(id),
+                        UNIQUE(profileId, videoId)
+                    );
+                    CREATE TABLE IF NOT EXISTS favorites (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, profileId INTEGER, videoId TEXT,
+                        FOREIGN KEY(profileId) REFERENCES profiles(id), FOREIGN KEY(videoId) REFERENCES videos(id),
+                        UNIQUE(profileId, videoId)
+                    );
+                    CREATE TABLE IF NOT EXISTS comments (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, videoId TEXT, profileId INTEGER,
+                        text TEXT, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(videoId) REFERENCES videos(id), FOREIGN KEY(profileId) REFERENCES profiles(id)
+                    );
+                    CREATE TABLE IF NOT EXISTS reactions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, videoId TEXT, profileId INTEGER,
+                        type TEXT, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY(videoId) REFERENCES videos(id), FOREIGN KEY(profileId) REFERENCES profiles(id),
+                        UNIQUE(videoId, profileId, type)
+                    );
+                    CREATE TABLE IF NOT EXISTS user_subscriptions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT, userId INTEGER NOT NULL,
+                        tier TEXT NOT NULL DEFAULT '${SUBSCRIPTION_TIERS.BASIC.id}',
+                        startDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP, endDate TIMESTAMP, status TEXT DEFAULT 'active',
+                        paymentGateway TEXT, transactionId TEXT,
+                        UNIQUE(userId), FOREIGN KEY(userId) REFERENCES users(id)
+                    );
+                `);
+            };
+
+            const populateInitialData = async () => {
+                const result = db.exec("SELECT COUNT(*) FROM videos");
+                if (result.length > 0 && result[0].values[0][0] > 0) return;
+                sampleVideos.forEach(video => {
+                    db.run("INSERT INTO videos (id, title, description, thumbnailUrl, videoUrl, genre, type, duration, rating, year, uploader, uploadDate, views, tags, contentRating) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                        video.id, video.title, video.description, video.thumbnailUrl, video.videoUrl, video.genre, video.type || 'Movie', video.duration, video.rating, video.year, video.uploader, video.uploadDate, Math.floor(Math.random() * 100000), JSON.stringify(video.tags || []), video.contentRating || 'G'
+                    ]);
+                });
+            };
+
+            const executeQuery = (sql, params = []) => {
+                try {
+                    const stmt = db.prepare(sql); stmt.bind(params);
+                    const results = []; while (stmt.step()) results.push(stmt.getAsObject());
+                    stmt.free(); return results;
+                } catch (e) { console.error("Query execution error:", e, sql, params); return []; }
+            };
+            const executeCommand = (sql, params = []) => {
+                try { db.run(sql, params); saveDb(); return true; }
+                catch (e) { console.error("Command execution error:", e, sql, params); return false; }
+            };
+
+            const getVideos = (limit = 50, offset = 0, parentalRating = 'NC-17', type = null) => {
+                const allowedRatings = CONTENT_RATINGS_ORDER.slice(0, CONTENT_RATINGS_ORDER.indexOf(parentalRating) + 1);
+                const ratingPlaceholders = allowedRatings.map(() => '?').join(',');
+                let query = `SELECT * FROM videos WHERE contentRating IN (${ratingPlaceholders})`;
+                const queryParams = [...allowedRatings];
+                if (type) { query += " AND type = ?"; queryParams.push(type); }
+                query += " ORDER BY rating DESC LIMIT ? OFFSET ?"; queryParams.push(limit, offset);
+                return executeQuery(query, queryParams);
+            };
+            const getVideoById = (id, parentalRating = 'NC-17') => {
+                const video = executeQuery("SELECT * FROM videos WHERE id = ?", [id])[0];
+                if (video && CONTENT_RATINGS_ORDER.indexOf(video.contentRating) > CONTENT_RATINGS_ORDER.indexOf(parentalRating)) return null;
+                return video;
+            };
+            const getVideosByGenre = (genre, limit = 10, parentalRating = 'NC-17', type = null) => {
+                const allowedRatings = CONTENT_RATINGS_ORDER.slice(0, CONTENT_RATINGS_ORDER.indexOf(parentalRating) + 1);
+                const ratingPlaceholders = allowedRatings.map(() => '?').join(',');
+                let query = `SELECT * FROM videos WHERE genre = ? AND contentRating IN (${ratingPlaceholders})`;
+                const queryParams = [genre, ...allowedRatings];
+                if (type) { query += " AND type = ?"; queryParams.push(type); }
+                query += " ORDER BY rating DESC LIMIT ?"; queryParams.push(limit);
+                return executeQuery(query, queryParams);
+            };
+            const getGenres = (type = null) => {
+                let query = "SELECT DISTINCT genre FROM videos"; const params = [];
+                if (type) { query += " WHERE type = ?"; params.push(type); }
+                query += " ORDER BY genre"; return executeQuery(query, params);
+            };
+            const searchVideos = (query, parentalRating = 'NC-17', type = null) => {
+                const allowedRatings = CONTENT_RATINGS_ORDER.slice(0, CONTENT_RATINGS_ORDER.indexOf(parentalRating) + 1);
+                const ratingPlaceholders = allowedRatings.map(() => '?').join(',');
+                let sqlQuery = `SELECT * FROM videos WHERE (title LIKE ? OR description LIKE ? OR genre LIKE ? OR tags LIKE ?) AND contentRating IN (${ratingPlaceholders})`;
+                const queryParams = [`%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`, ...allowedRatings];
+                if (type) { sqlQuery += " AND type = ?"; queryParams.push(type); }
+                sqlQuery += " ORDER BY rating DESC"; return executeQuery(sqlQuery, queryParams);
+            };
+            const incrementViewCount = (videoId) => executeCommand("UPDATE videos SET views = views + 1 WHERE id = ?", [videoId]);
+
+            const registerUser = (username, email, password) => {
+                if (!username || !email || !password) return { success: false, message: "All fields are required." };
+                if (executeQuery("SELECT id FROM users WHERE username = ?", [username]).length > 0) return { success: false, message: "Username already exists." };
+                if (executeQuery("SELECT id FROM users WHERE email = ?", [email]).length > 0) return { success: false, message: "Email already registered." };
+                const defaultPreferences = {
+                    theme: 'dark', parentalControlLevel: 'NC-17',
+                    notifications: { newEpisodes: true, recommendations: true, liveEvents: true, emailForNotifications: email },
+                    autoplayNext: true, defaultVideoQuality: 'auto', preferredAudioLanguage: 'en'
+                };
+                const success = executeCommand("INSERT INTO users (username, email, passwordHash) VALUES (?, ?, ?)", [username, email, `hashed_${password}`]);
+                if (success) {
+                    const user = executeQuery("SELECT * FROM users WHERE username = ?", [username])[0];
+                    createProfile(user.id, username, DEFAULT_AVATAR, false, 'NC-17', JSON.stringify(defaultPreferences));
+                    setUserSubscription(user.id, SUBSCRIPTION_TIERS.BASIC.id, null, 'System', 'InitialFreeTier');
+                    return { success: true, user };
+                }
+                return { success: false, message: "Registration failed." };
+            };
+            const loginUser = (identifier, password) => {
+                const user = executeQuery("SELECT * FROM users WHERE (username = ? OR email = ?) AND passwordHash = ?", [identifier, identifier, `hashed_${password}`])[0];
+                if (user) return { success: true, user };
+                return { success: false, message: "Invalid credentials." };
+            };
+            const getProfiles = (userId) => executeQuery("SELECT * FROM profiles WHERE userId = ? ORDER BY profileName", [userId]);
+            const createProfile = (userId, profileName, avatar, isChild, parentalControlLevel, preferencesString) => {
+                return executeCommand("INSERT INTO profiles (userId, profileName, avatar, isChild, parentalControlLevel, preferences) VALUES (?, ?, ?, ?, ?, ?)",
+                    [userId, profileName, avatar || DEFAULT_AVATAR, isChild ? 1:0, parentalControlLevel, preferencesString || JSON.stringify({theme: 'dark', parentalControlLevel: 'NC-17'})]);
+            };
+             const updateProfile = (profileId, profileData) => {
+                 const { profileName, avatar, isChild, preferences } = profileData; // parentalControlLevel is now within preferences
+                 const preferencesString = (typeof preferences === 'object' && preferences !== null) ? JSON.stringify(preferences) : (preferences || '{}');
+                 const finalParentalControlLevel = (preferences && preferences.parentalControlLevel) ? preferences.parentalControlLevel : 'NC-17';
+
+                 return executeCommand("UPDATE profiles SET profileName = ?, avatar = ?, isChild = ?, parentalControlLevel = ?, preferences = ? WHERE id = ?",
+                    [profileName, avatar, isChild ? 1:0, finalParentalControlLevel, preferencesString, profileId]);
+            };
+            const deleteProfile = (profileId) => {
+                executeCommand("DELETE FROM watch_history WHERE profileId = ?", [profileId]);
+                executeCommand("DELETE FROM favorites WHERE profileId = ?", [profileId]);
+                executeCommand("DELETE FROM comments WHERE profileId = ?", [profileId]);
+                executeCommand("DELETE FROM reactions WHERE profileId = ?", [profileId]);
+                return executeCommand("DELETE FROM profiles WHERE id = ?", [profileId]);
+            };
+
+            const getWatchHistory = (profileId, limit = 10, parentalRating = 'NC-17') => {
+                 const allowedRatings = CONTENT_RATINGS_ORDER.slice(0, CONTENT_RATINGS_ORDER.indexOf(parentalRating) + 1);
+                 const placeholders = allowedRatings.map(() => '?').join(',');
+                 return executeQuery(`
+                    SELECT v.*, wh.progress, wh.watchedAt
+                    FROM watch_history wh JOIN videos v ON wh.videoId = v.id
+                    WHERE wh.profileId = ? AND v.contentRating IN (${placeholders})
+                    ORDER BY wh.watchedAt DESC LIMIT ?
+                `, [profileId, ...allowedRatings, limit]);
+            };
+            const updateWatchProgress = (profileId, videoId, progress) => executeCommand("INSERT OR REPLACE INTO watch_history (profileId, videoId, progress, watchedAt) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", [profileId, videoId, progress]);
+            const getVideoProgress = (profileId, videoId) => executeQuery("SELECT progress FROM watch_history WHERE profileId = ? AND videoId = ?", [profileId, videoId])[0]?.progress || 0;
+
+            const addFavorite = (profileId, videoId) => executeCommand("INSERT OR IGNORE INTO favorites (profileId, videoId) VALUES (?, ?)", [profileId, videoId]);
+            const removeFavorite = (profileId, videoId) => executeCommand("DELETE FROM favorites WHERE profileId = ? AND videoId = ?", [profileId, videoId]);
+            const getFavorites = (profileId, parentalRating = 'NC-17') => {
+                const allowedRatings = CONTENT_RATINGS_ORDER.slice(0, CONTENT_RATINGS_ORDER.indexOf(parentalRating) + 1);
+                const placeholders = allowedRatings.map(() => '?').join(',');
+                return executeQuery(`SELECT v.* FROM favorites f JOIN videos v ON f.videoId = v.id WHERE f.profileId = ? AND v.contentRating IN (${placeholders})`, [profileId, ...allowedRatings]);
+            };
+            const isFavorite = (profileId, videoId) => executeQuery("SELECT id FROM favorites WHERE profileId = ? AND videoId = ?", [profileId, videoId]).length > 0;
+
+            const getComments = (videoId) => executeQuery("SELECT c.*, p.profileName, p.avatar FROM comments c JOIN profiles p ON c.profileId = p.id WHERE c.videoId = ? ORDER BY c.timestamp DESC", [videoId]);
+            const addComment = (videoId, profileId, text) => executeCommand("INSERT INTO comments (videoId, profileId, text) VALUES (?, ?, ?)", [videoId, profileId, text]);
+
+            const getReactions = (videoId, profileId) => executeQuery("SELECT type FROM reactions WHERE videoId = ? AND profileId = ?", [videoId, profileId]);
+            const getVideoReactionCounts = (videoId) => {
+                const likes = executeQuery("SELECT COUNT(*) as count FROM reactions WHERE videoId = ? AND type = 'like'", [videoId])[0]?.count || 0;
+                const dislikes = executeQuery("SELECT COUNT(*) as count FROM reactions WHERE videoId = ? AND type = 'dislike'", [videoId])[0]?.count || 0;
+                return { likes, dislikes };
+            };
+            const setReaction = (videoId, profileId, type) => {
+                executeCommand("DELETE FROM reactions WHERE videoId = ? AND profileId = ?", [videoId, profileId]);
+                if (type) return executeCommand("INSERT INTO reactions (videoId, profileId, type) VALUES (?, ?, ?)", [videoId, profileId, type]);
+                return true;
+            };
+
+            const getUserSubscription = (userId) => {
+                if (!db) return { tier: SUBSCRIPTION_TIERS.BASIC.id, status: 'active', startDate: new Date().toISOString() };
+                let sub = executeQuery("SELECT * FROM user_subscriptions WHERE userId = ? AND status = 'active' ORDER BY startDate DESC LIMIT 1", [userId])[0];
+                if (sub && sub.endDate) {
+                    if (new Date() > new Date(sub.endDate)) {
+                        executeCommand("UPDATE user_subscriptions SET status = 'expired' WHERE id = ?", [sub.id]);
+                        sub = null; // Force re-fetch or default to basic
+                    }
+                }
+                if (!sub) { // If no active sub or expired, ensure basic is set
+                    const basicSub = executeQuery("SELECT * FROM user_subscriptions WHERE userId = ? AND tier = ? AND status = 'active'", [userId, SUBSCRIPTION_TIERS.BASIC.id])[0];
+                    if(!basicSub) {
+                        setUserSubscription(userId, SUBSCRIPTION_TIERS.BASIC.id, null, 'System', 'FallbackEnsureBasic');
+                        return getUserSubscription(userId); // Recursive call to get the newly set basic sub
+                    }
+                    return basicSub;
+                }
+                return sub;
+            };
+
+            const setUserSubscription = (userId, tierId, durationDays = null, paymentGateway = 'System', transactionId = 'N/A') => {
+                if (!db) return false;
+                executeCommand("UPDATE user_subscriptions SET status = 'cancelled' WHERE userId = ? AND status = 'active' AND tier != ?", [userId, SUBSCRIPTION_TIERS.BASIC.id]); // Don't cancel basic
+                let endDate = null;
+                if (durationDays) {
+                    const startDate = new Date(); endDate = new Date(startDate.setDate(startDate.getDate() + durationDays)).toISOString();
+                } else if (tierId !== SUBSCRIPTION_TIERS.BASIC.id) {
+                     const startDate = new Date(); endDate = new Date(startDate.setDate(startDate.getDate() + 30)).toISOString();
+                }
+                return executeCommand( "INSERT OR REPLACE INTO user_subscriptions (userId, tier, endDate, status, paymentGateway, transactionId, startDate) VALUES (?, ?, ?, 'active', ?, ?, CURRENT_TIMESTAMP)",
+                    [userId, tierId, endDate, paymentGateway, transactionId]
+                );
+            };
+            const getSubscriptionTierDetails = (tierId) => Object.values(SUBSCRIPTION_TIERS).find(t => t.id === tierId) || SUBSCRIPTION_TIERS.BASIC;
+
+            return {
+                initDb, getVideos, getVideoById, getVideosByGenre, getGenres, searchVideos,
+                registerUser, loginUser, getProfiles, createProfile, updateProfile, deleteProfile,
+                getWatchHistory, updateWatchProgress, getVideoProgress,
+                addFavorite, removeFavorite, getFavorites, isFavorite,
+                getComments, addComment, getReactions, getVideoReactionCounts, setReaction,
+                incrementViewCount,
+                getUserSubscription, setUserSubscription, getSubscriptionTierDetails,
+            };
+        };
+
+        const dbService = DatabaseService();
+
+        // --- React Components ---
+        const RouterContext = createContext();
+        const RouterProvider = ({ children }) => {
+            const [route, setRoute] = useState(window.location.hash || '#/');
+            useEffect(() => {
+                const handleHashChange = () => setRoute(window.location.hash || '#/');
+                window.addEventListener('hashchange', handleHashChange);
+                return () => window.removeEventListener('hashchange', handleHashChange);
+            }, []);
+            const navigate = (path) => { window.location.hash = path; };
+            return <RouterContext.Provider value={{ route, navigate }}>{children}</RouterContext.Provider>;
+        };
+        const useRoute = () => useContext(RouterContext);
+
+        const AuthModal = ({ closeModal }) => {
+            const [isLoginView, setIsLoginView] = useState(true);
+            const [username, setUsername] = useState('');
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const { login } = useContext(AppContext);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault(); setError('');
+                let result;
+                if (isLoginView) {
+                    result = dbService.loginUser(email, password);
+                } else {
+                    result = dbService.registerUser(username, email, password);
+                }
+
+                if (result.success) {
+                    login(result.user);
+                    closeModal();
+                } else {
+                    setError(result.message || "An error occurred.");
+                }
+            };
+
+            return (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <button className="modal-close-btn" onClick={closeModal}><i className="fas fa-times"></i></button>
+                        <h2 className="modal-title">{isLoginView ? "Login to Streamverse" : "Join Streamverse"}</h2>
+                        {error && <p className="modal-error">{error}</p>}
+                        <form className="modal-form" onSubmit={handleSubmit}>
+                            {!isLoginView && (<input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} required /> )}
+                            <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required />
+                            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+                            <button type="submit">{isLoginView ? "Login" : "Sign Up"}</button>
+                        </form>
+                        <div className="modal-switch-auth">
+                            {isLoginView ? "Don't have an account?" : "Already have an account?"}
+                            <button onClick={() => { setIsLoginView(!isLoginView); setError(''); }}>
+                                {isLoginView ? "Sign Up" : "Login"}
+                            </button>
+                        </div>
+                         <div className="placeholder-info mt-1"><strong>Security Note:</strong> Passwords are "hashed" for demo. Real apps use strong, salted hashing.</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ProfileModal = ({ user, closeModal }) => {
+            const { setCurrentProfile, navigate, theme } = useContext(AppContext); // Added theme
+            const [profiles, setProfiles] = useState([]);
+            const [showCreateForm, setShowCreateForm] = useState(false);
+            const [newProfileName, setNewProfileName] = useState('');
+            const [newProfileAvatar, setNewProfileAvatar] = useState('');
+            const [isNewProfileChild, setIsNewProfileChild] = useState(false);
+
+            useEffect(() => {
+                if (user) {
+                    const userProfiles = dbService.getProfiles(user.id);
+                    setProfiles(userProfiles);
+                    if (userProfiles.length === 0) setShowCreateForm(true);
+                }
+            }, [user]);
+
+            const handleSelectProfile = (profile) => {
+                setCurrentProfile(profile); // setCurrentProfile in App.js handles parsing preferences string
+                closeModal();
+                navigate('#/');
+            };
+
+            const handleCreateProfile = (e) => {
+                e.preventDefault();
+                if (newProfileName.trim() === '') return;
+                const defaultPreferences = { // Define default preferences for a new profile
+                    theme: theme || 'dark', // Use current global theme or default
+                    parentalControlLevel: isNewProfileChild ? 'PG' : 'NC-17',
+                    notifications: { newEpisodes: true, recommendations: true, liveEvents: true, emailForNotifications: user.email },
+                    autoplayNext: true, defaultVideoQuality: 'auto', preferredAudioLanguage: 'en'
+                };
+                const success = dbService.createProfile(user.id, newProfileName, newProfileAvatar || `https://picsum.photos/seed/${newProfileName}/50/50`, isNewProfileChild, defaultPreferences.parentalControlLevel, JSON.stringify(defaultPreferences));
+                if (success) {
+                    const updatedProfiles = dbService.getProfiles(user.id);
+                    setProfiles(updatedProfiles);
+                    if (profiles.length === 0 && updatedProfiles.length === 1) {
+                         handleSelectProfile(updatedProfiles[0]);
+                    } else {
+                        setShowCreateForm(false);
+                    }
+                    setNewProfileName(''); setNewProfileAvatar(''); setIsNewProfileChild(false);
+                } else { alert("Failed to create profile. Name might exist."); }
+            };
+
+            if (!user) return null;
+
+            return (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                         <button className="modal-close-btn" onClick={closeModal}><i className="fas fa-times"></i></button>
+                        <h2 className="modal-title">Who's Watching?</h2>
+                        {!showCreateForm ? (
+                            <>
+                                <ul className="profile-selection-list">
+                                    {profiles.map(profile => (
+                                        <li key={profile.id} className="profile-selection-item" onClick={() => handleSelectProfile(profile)}>
+                                            <img src={profile.avatar || DEFAULT_AVATAR} alt={profile.profileName} />
+                                            <span>{profile.profileName} {profile.isChild ? '(Child)' : ''}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                {profiles.length < 5 && (<button className="general-button profile-create-btn" onClick={() => setShowCreateForm(true)}><i className="fas fa-plus-circle"></i> Add Profile</button> )}
+                                {profiles.length > 0 && <button className="general-button" style={{marginTop: "0.5rem", backgroundColor: "var(--theme-text-muted)"}} onClick={closeModal}>Cancel</button> }
+                            </>
+                        ) : (
+                            <form className="modal-form" onSubmit={handleCreateProfile}>
+                                <h3 style={{marginBottom: '1rem', textAlign:'center', fontWeight:'normal', color: 'var(--theme-text-color)'}}>Create New Profile</h3>
+                                <input type="text" placeholder="Profile Name" value={newProfileName} onChange={e => setNewProfileName(e.target.value)} required />
+                                <input type="text" placeholder="Avatar URL (optional)" value={newProfileAvatar} onChange={e => setNewProfileAvatar(e.target.value)} />
+                                <label style={{display: 'flex', alignItems: 'center', marginBottom: '0.8rem', fontSize: '0.9em', color: 'var(--theme-text-color)'}}>
+                                    <input type="checkbox" checked={isNewProfileChild} onChange={e => setIsNewProfileChild(e.target.checked)} style={{width:'auto', marginRight:'0.5rem'}}/>
+                                    Is this a child's profile?
+                                </label>
+                                <button type="submit" className="general-button">Create Profile</button>
+                                {profiles.length > 0 && <button type="button" className="general-button" style={{marginTop: "0.5rem", backgroundColor: "var(--theme-text-muted)"}} onClick={() => setShowCreateForm(false)}>Cancel</button> }
+                            </form>
+                        )}
+                         <div className="placeholder-info mt-1"><strong>Personalization AI:</strong> Each profile's data feeds an AI model.</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Navbar = () => {
+            const { route, navigate } = useRoute();
+            const [searchTerm, setSearchTerm] = useState('');
+            const [scrolled, setScrolled] = useState(false);
+            const { currentUser, currentProfile, logout, setShowAuthModal, toggleTheme, theme, userSubscription } = useContext(AppContext);
+
+            const handleSearch = (e) => {
+                e.preventDefault();
+                if (searchTerm.trim() && currentProfile) {
+                    navigate(`#/search?q=${encodeURIComponent(searchTerm.trim())}`);
+                    setSearchTerm('');
+                }
+            };
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 30);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+            const getLinkClass = (path) => route.startsWith(path) && path !== '#/' || route === path ? 'active-link' : '';
+
+            return (
+                <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+                    <div className="navbar-brand" onClick={() => navigate('#/')}>Streamverse</div>
+                    <div className="navbar-links">
+                        <a href="#/" onClick={(e) => { e.preventDefault(); navigate('#/'); }} className={route === '#/' || route === '' ? 'active-link' : ''}>Home</a>
+                        <a href="#/tv" onClick={(e) => { e.preventDefault(); navigate('#/tv'); }} className={getLinkClass('#/tv')}>TV Shows</a>
+                        <a href="#/movies" onClick={(e) => { e.preventDefault(); navigate('#/movies'); }} className={getLinkClass('#/movies')}>Movies</a>
+                        <a href="#/live" onClick={(e) => { e.preventDefault(); navigate('#/live'); }} className={getLinkClass('#/live')}>Live</a>
+                        {currentProfile && userSubscription && userSubscription.tier !== SUBSCRIPTION_TIERS.BASIC.id && (
+                             <a href="#/subscription" onClick={(e) => { e.preventDefault(); navigate('#/subscription'); }} className={getLinkClass('#/subscription')} style={{color: 'var(--premium-color)'}}>
+                                <i className="fas fa-crown" style={{marginRight: '0.3rem'}}></i>Premium Access
+                             </a>
+                        )}
+                    </div>
+                    <div style={{display: 'flex', alignItems: 'center'}}>
+                        {currentProfile && (
+                            <form className="navbar-search" onSubmit={handleSearch}>
+                                <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                            </form>
+                        )}
+                        <button onClick={toggleTheme} className="theme-toggle-btn" title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}>
+                            <i className={`fas fa-${theme === 'dark' ? 'sun' : 'moon'}`}></i>
+                        </button>
+                        <div className="navbar-profile">
+                            {currentUser && currentProfile ? (
+                                <>
+                                    <span style={{marginRight: '0.5rem', color: 'var(--theme-text-color)', cursor:'pointer', fontSize:'0.85em'}} onClick={() => navigate('#/settings')}>
+                                        {currentProfile.profileName}
+                                    </span>
+                                    <img src={currentProfile.avatar || DEFAULT_AVATAR} alt={currentProfile.profileName} className="profile-avatar" onClick={() => navigate('#/settings')} />
+                                    <button onClick={logout} title="Logout"><i className="fas fa-sign-out-alt"></i></button>
+                                </>
+                            ) : (
+                                <button onClick={() => setShowAuthModal(true)} title="Login/Sign Up"><i className="fas fa-user-circle"></i></button>
+                            )}
+                        </div>
+                    </div>
+                </nav>
+            );
+        };
+
+        const HeroSection = ({ video }) => {
+            const { navigate } = useRoute();
+            if (!video) return <div style={{height: '75vh', display:'flex', alignItems:'center', justifyContent:'center', backgroundColor:'var(--theme-card-background)', color: 'var(--theme-text-muted)', paddingTop:'80px'}}>Loading Hero...</div>;
+            return (
+                <div className="hero-section" style={{ backgroundImage: `url(${video.thumbnailUrl})` }}>
+                    <div className="hero-content">
+                        <h1 className="hero-title">{video.title}</h1>
+                        <p className="hero-description">{video.description}</p>
+                        <div className="hero-buttons">
+                            <button className="btn btn-play" onClick={() => navigate(`#/player/${video.id}`)}><i className="fas fa-play"></i> Play</button>
+                            <button className="btn btn-info" onClick={() => navigate(`#/player/${video.id}`)}><i className="fas fa-info-circle"></i> More Info</button>
+                        </div>
+                        <div className="placeholder-info mt-1"><strong>Dynamic Hero AI:</strong> Showcasing relevant content.</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const VideoCard = ({ video }) => {
+            const { navigate } = useRoute();
+            const { currentProfile, favorites, toggleFavorite, dbService, setShowAuthModal } = useContext(AppContext);
+            const [progress, setProgress] = useState(0);
+            const [viewCount, setViewCount] = useState(video?.views || 0);
+
+            useEffect(() => {
+                if (currentProfile && video) {
+                    const p = dbService.getVideoProgress(currentProfile.id, video.id); setProgress(p || 0);
+                } else { setProgress(0); }
+            }, [currentProfile, video, dbService]);
+
+            if (!video) return null;
+            const isFav = currentProfile && favorites.some(fav => fav.id === video.id);
+            const handleFavoriteClick = (e) => { e.stopPropagation(); if (currentProfile) toggleFavorite(video.id); else setShowAuthModal(true); };
+            const handleCardClick = () => { dbService.incrementViewCount(video.id); setViewCount(prev => prev + 1); navigate(`#/player/${video.id}`); };
+
+            return (
+                <div className="video-card" onClick={handleCardClick}>
+                    <div style={{position: 'relative'}}>
+                        <img src={video.thumbnailUrl} alt={video.title} className="video-thumbnail" />
+                        {progress > 0.02 && progress < 0.98 && (<div className="video-card-progress-bar"><div className="video-card-progress" style={{ width: `${progress * 100}%` }}></div></div> )}
+                        <span style={{position: 'absolute', top: '5px', right: '5px', backgroundColor: 'rgba(0,0,0,0.7)', color: '#fff', padding: '2px 5px', borderRadius: '3px', fontSize: '0.7em'}}>{video.type || 'Movie'}</span>
+                    </div>
+                    <div className="video-card-content">
+                        <h3 className="video-card-title">{video.title}</h3>
+                        <div className="video-card-meta">
+                            <span>{video.genre}</span><span><i className="fas fa-star text-primary"></i> {video.rating?.toFixed(1)}</span>
+                        </div>
+                         <div className="video-card-actions">
+                            <button onClick={(e) => { e.stopPropagation(); handleCardClick();}} title="Play"><i className="fas fa-play"></i></button>
+                            <span className="views-count" title="Views"><i className="fas fa-eye"></i> {viewCount.toLocaleString()}</span>
+                            <button onClick={handleFavoriteClick} title={isFav ? "Remove from Favorites" : "Add to Favorites"} className={isFav ? 'favorited' : ''}>
+                                <i className={`fas ${isFav ? 'fa-heart-broken' : 'fa-heart'}`}></i></button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const VideoRow = ({ title, videos, isFirstRow, className }) => {
+            if (!videos || videos.length === 0) return null; /* Hide row if no videos */
+            return (
+                <div className={`video-row-container ${isFirstRow ? 'first-row' : ''} ${className || ''}`}>
+                    <h2 className="video-row-title">{title}</h2>
+                    <div className="video-row">
+                        {videos.map(video => (<VideoCard key={`${video.id}-${title}-${Math.random()}`} video={video} /> ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const CommentsComponent = ({ videoId }) => {
+            const { currentProfile, dbService, setShowAuthModal } = useContext(AppContext);
+            const [comments, setComments] = useState([]);
+            const [newComment, setNewComment] = useState('');
+
+            useEffect(() => { if (videoId) setComments(dbService.getComments(videoId)); }, [videoId, dbService]);
+            const handlePostComment = (e) => {
+                e.preventDefault(); if (!currentProfile) { setShowAuthModal(true); return; }
+                if (newComment.trim()) {
+                    dbService.addComment(videoId, currentProfile.id, newComment.trim());
+                    setNewComment(''); setComments(dbService.getComments(videoId));
+                }
+            };
+            return (
+                <div className="comments-section">
+                    <h3><i className="fas fa-comments"></i> Comments ({comments.length})</h3>
+                    {currentProfile && (
+                        <form className="comment-form" onSubmit={handlePostComment}>
+                            <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder="Add a public comment..." rows="3"></textarea>
+                            <button type="submit" className="general-button">Comment</button>
+                        </form>
+                    )}
+                    {!currentProfile && <p className="placeholder-info">Please <a href="#" onClick={(e) => {e.preventDefault(); setShowAuthModal(true);}} style={{color: 'var(--theme-primary-color)'}}>login</a> to comment.</p>}
+                    <div className="comment-list mt-1">
+                        {comments.map(comment => (
+                            <div key={comment.id} className="comment">
+                                <p className="comment-author"><img src={comment.avatar || DEFAULT_AVATAR} alt={comment.profileName} />{comment.profileName}</p>
+                                <p className="comment-text">{comment.text}</p>
+                                <p className="comment-meta">{new Date(comment.timestamp).toLocaleString()}</p>
+                            </div>
+                        ))}
+                        {comments.length === 0 && <p className="placeholder-info" style={{fontStyle:'italic'}}>No comments yet.</p>}
+                    </div>
+                    <div className="placeholder-info mt-1"><strong>Advanced Social Features (AI-Powered):</strong> Sentiment analysis, topic clustering, smart replies.</div>
+                </div>
+            );
+        };
+
+        // HomePage Component - Corrected
+        const HomePage = () => {
+            const [heroVideo, setHeroVideo] = useState(null);
+            const [genres, setGenres] = useState([]);
+            const [videosByGenre, setVideosByGenre] = useState({});
+            const [continueWatching, setContinueWatching] = useState([]);
+            const [recommendations, setRecommendations] = useState([]);
+            const { currentProfile, dbService, setShowAuthModal, addAppNotification } = useContext(AppContext);
+
+            useEffect(() => {
+                if (!currentProfile) return;
+                const parentalPref = currentProfile.preferences?.parentalControlLevel || currentProfile.parentalControlLevel || 'NC-17';
+                const allVideos = dbService.getVideos(50, 0, parentalPref);
+                if (allVideos.length > 0) {
+                    const highRatedVideos = allVideos.filter(v => v.rating >= 4.5);
+                    setHeroVideo(highRatedVideos.length > 0 ? highRatedVideos[Math.floor(Math.random() * highRatedVideos.length)] : allVideos[0]);
+                } else {
+                    setHeroVideo(sampleVideos.length > 0 ? sampleVideos[0] : null);
+                }
+                const fetchedGenres = dbService.getGenres().map(g => g.genre);
+                setGenres(fetchedGenres);
+                const genreMap = {};
+                fetchedGenres.forEach(genre => { genreMap[genre] = dbService.getVideosByGenre(genre, 15, parentalPref); });
+                setVideosByGenre(genreMap);
+                setContinueWatching(dbService.getWatchHistory(currentProfile.id, 10, parentalPref));
+                const history = dbService.getWatchHistory(currentProfile.id, 1, parentalPref);
+                let recVideos = [];
+                if (history.length > 0 && history[0].genre) {
+                    recVideos = dbService.getVideosByGenre(history[0].genre, 10, parentalPref).filter(v => v.id !== history[0].videoId && !dbService.getWatchHistory(currentProfile.id, 100, parentalPref).find(wh => wh.videoId === v.id));
+                }
+                if(recVideos.length < 10 && allVideos.length > 0) {
+                    const topRated = allVideos.sort((a,b) => b.rating - a.rating)
+                                        .filter(v => !recVideos.find(rv => rv.id === v.id) && (!history[0] || v.id !== history[0].videoId) && !dbService.getWatchHistory(currentProfile.id, 100, parentalPref).find(wh => wh.videoId === v.id) )
+                                        .slice(0, 10 - recVideos.length);
+                    recVideos = [...new Set([...recVideos, ...topRated])];
+                }
+                setRecommendations(recVideos.slice(0,10));
+            }, [currentProfile, dbService]);
+
+            useEffect(() => {
+                if (currentProfile && currentProfile.preferences?.notifications?.recommendations && recommendations.length > 0 && addAppNotification) {
+                    const lastRecNotificationTime = localStorage.getItem('lastRecNotificationTime');
+                    const now = Date.now();
+                    if (!lastRecNotificationTime || (now - parseInt(lastRecNotificationTime)) > 3600000) { // 1 hour
+                        if (Math.random() < 0.5) {
+                            addAppNotification( `You might like "${recommendations[0].title}"! Check out your recommendations.`, 'info', 10000, "New For You" );
+                            localStorage.setItem('lastRecNotificationTime', now.toString());
+                        }
+                    }
+                }
+            }, [currentProfile, recommendations, addAppNotification]);
+
+            if (!currentProfile) {
+                return (
+                    <div style={{textAlign: 'center', marginTop: '5rem', padding: '2rem', color: 'var(--theme-text-muted)'}}>
+                        <h2 style={{color: 'var(--theme-text-color)', fontFamily: 'var(--theme-font-heading)'}}>Welcome to Streamverse!</h2>
+                        <p style={{fontSize: '1.2em', marginBottom: '1.5rem'}}>Your ultimate intelligent streaming experience awaits.</p>
+                        <button className="general-button" onClick={() => setShowAuthModal(true)}><i className="fas fa-user-plus"></i> Login or Sign Up</button>
+                        <div className="placeholder-info mt-2" style={{maxWidth: '600px', margin: '2rem auto', textAlign:'left'}}><strong>AI Preview:</strong> Log in to see personalized content!</div>
+                    </div>
+                );
+            }
+            return (
+                <>
+                    <HeroSection video={heroVideo} />
+                    <div style={{position: 'relative', zIndex: 10}}>
+                        {continueWatching.length > 0 && (<VideoRow title="Continue Watching" videos={continueWatching.map(cw => ({...cw, id: cw.videoId}))} isFirstRow={true} />)}
+                        {recommendations.length > 0 && (<VideoRow title="Recommended For You" videos={recommendations} isFirstRow={!continueWatching.length > 0} />)}
+                        {genres.map(genre => (videosByGenre[genre] && videosByGenre[genre].length > 0 && <VideoRow key={genre} title={genre} videos={videosByGenre[genre]} /> ))}
+                        <VideoRow title="All Time Favorites (Demo)" videos={dbService.getVideos(15, 0, currentProfile.preferences?.parentalControlLevel || currentProfile.parentalControlLevel || 'NC-17').sort((a,b) => b.rating - a.rating)} />
+                        <div className="placeholder-info" style={{margin: '2rem 1.5rem', padding: '1rem'}}><strong>Intelligent Curation Engine (ICE):</strong> AI considers viewing patterns, ratings, time of day, and serendipity.</div>
+                    </div>
+                </>
+            );
+        };
+
+        const PlayerPage = () => {
+            const { route, navigate } = useRoute();
+            const videoId = route.split('/')[2];
+            const [video, setVideo] = useState(null);
+            const [recommendations, setRecommendations] = useState([]);
+            const videoRef = useRef(null);
+            const { currentProfile, favorites, toggleFavorite, dbService, setShowAuthModal, userSubscription } = useContext(AppContext);
+            const [isFav, setIsFav] = useState(false);
+            const [userReaction, setUserReaction] = useState(null);
+            const [reactionCounts, setReactionCounts] = useState({ likes: 0, dislikes: 0 });
+            const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+
+            useEffect(() => {
+                const parentalPref = currentProfile?.preferences?.parentalControlLevel || currentProfile?.parentalControlLevel || 'NC-17';
+                const currentVideo = dbService.getVideoById(videoId, parentalPref);
+                if (!currentVideo) { navigate("#/"); return; }
+
+                const currentTier = userSubscription?.tier || SUBSCRIPTION_TIERS.BASIC.id;
+                const isPremiumContent = currentVideo.id === 'sintel' || currentVideo.id === 'tears_of_steel';
+                const isProfessionalContent = currentVideo.id === 'cosmos_laundromat';
+                let shouldShowUpgrade = (isProfessionalContent && currentTier !== SUBSCRIPTION_TIERS.PROFESSIONAL.id) || (isPremiumContent && currentTier === SUBSCRIPTION_TIERS.BASIC.id);
+                setShowUpgradePrompt(shouldShowUpgrade);
+                setVideo(currentVideo);
+                if (!shouldShowUpgrade) dbService.incrementViewCount(videoId);
+                if (currentVideo.genre) setRecommendations(dbService.getVideosByGenre(currentVideo.genre, 5, parentalPref).filter(v => v.id !== videoId));
+                if (currentProfile) {
+                    setIsFav(dbService.isFavorite(currentProfile.id, videoId));
+                    const existingReactions = dbService.getReactions(videoId, currentProfile.id);
+                    if (existingReactions.length > 0) setUserReaction(existingReactions[0].type);
+                }
+                setReactionCounts(dbService.getVideoReactionCounts(videoId));
+            }, [videoId, currentProfile, dbService, userSubscription, navigate]);
+
+            useEffect(() => {
+                const player = videoRef.current;
+                if (!player || !currentProfile || !video || showUpgradePrompt) return;
+                let progressInterval;
+                const loadProgress = () => {
+                    const savedProgress = dbService.getVideoProgress(currentProfile.id, video.id);
+                    if (savedProgress > 0.01 && savedProgress < 0.98) {
+                        const onLoadedMetadata = () => { if (player.duration && (savedProgress * player.duration < player.duration - 3)) player.currentTime = savedProgress * player.duration; player.removeEventListener('loadedmetadata', onLoadedMetadata); };
+                        if (player.readyState >= 1) onLoadedMetadata(); else player.addEventListener('loadedmetadata', onLoadedMetadata, { once: true });
+                    }
+                };
+                const updateDBProgress = () => {
+                    if (player && player.duration > 0 && currentProfile && video) {
+                        const currentProgress = player.currentTime / player.duration;
+                        const lastSavedProgress = dbService.getVideoProgress(currentProfile.id, video.id) || 0;
+                        if (Math.abs(currentProgress - lastSavedProgress) > 0.01 || currentProgress > 0.98 || (currentProgress < 0.02 && lastSavedProgress > 0)) {
+                           dbService.updateWatchProgress(currentProfile.id, video.id, currentProgress);
+                        }
+                    }
+                };
+                player.addEventListener('canplaythrough', loadProgress, { once: true });
+                progressInterval = setInterval(updateDBProgress, 5000);
+                player.addEventListener('ended', updateDBProgress); player.addEventListener('pause', updateDBProgress);
+                return () => { if (player) { player.removeEventListener('canplaythrough', loadProgress); player.removeEventListener('ended', updateDBProgress); player.removeEventListener('pause', updateDBProgress); updateDBProgress(); } clearInterval(progressInterval); };
+            }, [video, currentProfile, videoRef, dbService, showUpgradePrompt]);
+
+            const handleToggleFavorite = () => { if (!currentProfile) { setShowAuthModal(true); return; } toggleFavorite(video.id); setIsFav(!isFav); };
+            const handleReaction = (type) => {
+                if (!currentProfile) { setShowAuthModal(true); return; }
+                const newReactionType = userReaction === type ? null : type;
+                dbService.setReaction(videoId, currentProfile.id, newReactionType); setUserReaction(newReactionType); setReactionCounts(dbService.getVideoReactionCounts(videoId));
+            };
+
+            if (!video) return <div className="loading-spinner-container"><div className="loading-spinner"></div><p>Loading Video...</p></div>;
+            return (
+                <div className="player-page-container">
+                    <div className="video-player-wrapper">
+                        {showUpgradePrompt ? (
+                            <div style={{width: '100%', height: '100%', background: `url(${video.thumbnailUrl}) center/cover no-repeat`, display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', textAlign:'center', padding:'2rem', position:'relative'}}>
+                                <div style={{position:'absolute', top:0,left:0,width:'100%',height:'100%', backgroundColor:'rgba(0,0,0,0.7)'}}></div>
+                                <div style={{position:'relative', zIndex:1}}>
+                                    <i className="fas fa-lock" style={{fontSize:'3rem', color:'var(--premium-color)', marginBottom:'1rem'}}></i>
+                                    <h2 style={{fontFamily:'var(--theme-font-heading)', color:'#fff'}}>Content Locked</h2>
+                                    <p style={{color:'var(--theme-secondary-color)', marginBottom:'1.5rem'}}>Upgrade to enjoy!</p>
+                                    <button className="general-button" onClick={() => navigate('#/subscription')}><i className="fas fa-star"></i> Upgrade Plan</button>
+                                </div>
+                            </div>
+                        ) : ( <video ref={videoRef} src={video.videoUrl} controls autoPlay poster={video.thumbnailUrl} key={video.id}></video> )}
+                    </div>
+                    <div className="video-details-container">
+                        <h1 className="video-details-title">{video.title}</h1>
+                        <div className="video-details-meta">
+                            <span>{video.year}</span> | <span>{video.duration}</span> | <span>{video.genre}</span> | <span>{video.type}</span> |
+                            <span><i className="fas fa-star text-primary"></i> {video.rating?.toFixed(1)}</span> |
+                            <span><i className="fas fa-eye"></i> {video.views?.toLocaleString()} views</span> |
+                            <span>Rated: {video.contentRating}</span>
+                        </div>
+                         <div className="video-player-actions">
+                            <button onClick={() => handleReaction('like')} className={userReaction === 'like' ? 'favorited' : ''} disabled={!currentProfile || showUpgradePrompt}><i className="fas fa-thumbs-up icon"></i> Like ({reactionCounts.likes})</button>
+                            <button onClick={() => handleReaction('dislike')} className={userReaction === 'dislike' ? 'favorited' : ''} style={userReaction === 'dislike' ? {borderColor: 'var(--theme-text-muted)'} : {}} disabled={!currentProfile || showUpgradePrompt}><i className="fas fa-thumbs-down icon"></i> Dislike ({reactionCounts.dislikes})</button>
+                            <button onClick={handleToggleFavorite} className={isFav ? 'favorited' : ''} disabled={!currentProfile || showUpgradePrompt}><i className={`fas ${isFav ? 'fa-heart-broken' : 'fa-heart'} icon`}></i> {isFav ? "Favorited" : "Favorite"}</button>
+                            <button className="placeholder-btn" title="Coming soon!"><i className="fas fa-share-alt icon"></i> Share</button>
+                            <button className="placeholder-btn" title="Coming soon!"><i className="fas fa-plus-square icon"></i> Playlist</button>
+                            <button className="placeholder-btn" title="Coming soon!"><i className="fas fa-hand-holding-usd icon"></i> Tip</button>
+                        </div>
+                        <p className="video-details-description">{video.description}</p>
+                        <div className="placeholder-info"><strong>Intelligent Playback:</strong> Adaptive Bitrate (simulated).</div>
+                        <CommentsComponent videoId={video.id} />
+                    </div>
+                    {recommendations.length > 0 && (<div style={{width: '100%', maxWidth: '900px', marginTop: '1.5rem'}}><VideoRow title={`More from ${video.genre}`} videos={recommendations} /></div> )}
+                </div>
+            );
+        };
+
+        const SearchResultsPage = () => {
+            const { route } = useRoute();
+            const [results, setResults] = useState([]);
+            const [query, setQuery] = useState('');
+            const { currentProfile, dbService, setShowAuthModal } = useContext(AppContext);
+
+            useEffect(() => {
+                if (!currentProfile) return;
+                const params = new URLSearchParams(route.split('?')[1]); const q = params.get('q'); setQuery(q || '');
+                if (q) setResults(dbService.searchVideos(q, currentProfile.preferences?.parentalControlLevel || currentProfile.parentalControlLevel || 'NC-17')); else setResults([]);
+            }, [route, currentProfile, dbService]);
+
+            if (!currentProfile) {
+                 return (
+                    <div style={{textAlign: 'center', marginTop: '5rem', padding: '2rem', color: 'var(--theme-text-muted)'}}>
+                        <h2 style={{color: 'var(--theme-text-color)', fontFamily: 'var(--theme-font-heading)'}}>Search Streamverse</h2>
+                        <p style={{fontSize: '1.2em', marginBottom: '1.5rem'}}>Login or select a profile.</p>
+                        <button className="general-button" onClick={() => setShowAuthModal(true)}><i className="fas fa-search"></i> Login to Search</button>
+                    </div>
+                );
+            }
+            return (
+                <div className="search-results-container">
+                    <h1 className="search-results-title">Search Results for "{query}"</h1>
+                    {results.length > 0 ? (
+                        <div className="search-results-grid">
+                            {results.map(video => <VideoCard key={`${video.id}-search`} video={video} />)}
+                        </div>
+                    ) : ( <p className="no-results">No videos found for "{query}".</p> )}
+                     <div className="placeholder-info mt-2"><strong>AI-Powered Semantic Search (Future).</strong></div>
+                </div>
+            );
+        };
+
+        const createContentPage = (pageTitle, contentType, emptyMessage) => {
+            return () => {
+                const { currentProfile, dbService, setShowAuthModal } = useContext(AppContext);
+                const [genres, setGenres] = useState([]);
+                const [videosByGenre, setVideosByGenre] = useState({});
+                const [featuredVideos, setFeaturedVideos] = useState([]);
+
+                useEffect(() => {
+                    if (!currentProfile) return;
+                    const parentalPref = currentProfile.preferences?.parentalControlLevel || currentProfile.parentalControlLevel || 'NC-17';
+                    setFeaturedVideos(dbService.getVideos(10, 0, parentalPref, contentType).sort((a, b) => b.rating - a.rating));
+                    const fetchedGenres = dbService.getGenres(contentType).map(g => g.genre);
+                    setGenres(fetchedGenres);
+                    const genreMap = {};
+                    fetchedGenres.forEach(genre => { genreMap[genre] = dbService.getVideosByGenre(genre, 15, parentalPref, contentType); });
+                    setVideosByGenre(genreMap);
+                }, [currentProfile, dbService]);
+
+                if (!currentProfile) {
+                    return (
+                        <div className="placeholder-page-content" style={{paddingTop: '80px'}}>
+                            <h2>Explore {pageTitle}</h2>
+                            <p>Please login or select a profile.</p>
+                            <button className="general-button" onClick={() => setShowAuthModal(true)}><i className="fas fa-sign-in-alt"></i> Login to Explore</button>
+                        </div>
+                    );
+                }
+                return (
+                    <div className={`${contentType.toLowerCase()}-page-container page-container`}>
+                        <h1 className="page-title">{pageTitle}</h1>
+                         {featuredVideos.length > 0 && <VideoRow title={`Featured ${pageTitle}`} videos={featuredVideos} className="static-page-row first-row" />}
+                        {genres.length > 0 ? genres.map(genre => (
+                            videosByGenre[genre] && videosByGenre[genre].length > 0 && <VideoRow key={`${contentType}-${genre}`} title={genre} videos={videosByGenre[genre]} className="static-page-row" />
+                        )) : ( <div className="placeholder-page-content"><p>{emptyMessage}</p><div className="placeholder-info mt-2" style={{textAlign:'left'}}><strong>Content Ingestion & AI Tagging.</strong></div></div> )}
+                    </div>
+                );
+            };
+        };
+        const TVShowsPage = createContentPage("TV Shows", "TV Show", "No TV shows available yet.");
+        const MoviesPage = createContentPage("Movies", "Movie", "No movies available at this moment.");
+        const LivePage = () => {
+            const { currentProfile, setShowAuthModal } = useContext(AppContext);
+             if (!currentProfile) {
+                    return ( <div className="placeholder-page-content" style={{paddingTop: '80px'}}><h2>Live Events</h2><p>Login to see live streams!</p><button className="general-button" onClick={() => setShowAuthModal(true)}><i className="fas fa-broadcast-tower"></i> View Live</button></div> ); }
+            return (
+                <div className="live-page-container page-container">
+                    <h1 className="page-title">Live Now & Upcoming</h1>
+                    <div className="placeholder-page-content">
+                        <i className="fas fa-satellite-dish" style={{fontSize: '3rem', marginBottom: '1rem', color: 'var(--theme-primary-color)'}}></i>
+                        <h2>Live Streaming Coming Soon!</h2>
+                        <p>Imagine live sports, news, concerts, and interactive Q&As.</p>
+                        <div className="placeholder-info" style={{textAlign:'left'}}><strong>Future of Live (AI Enhanced).</strong></div>
+                    </div>
+                    <VideoRow title="Currently Live (Simulated)" videos={[sampleVideos[0], sampleVideos[2]].map(v => ({...v, title: `LIVE: ${v.title}`}))} className="static-page-row"/>
+                    <VideoRow title="Upcoming Events (Simulated)" videos={[sampleVideos[1], sampleVideos[3]].map(v => ({...v, title: `UPCOMING: ${v.title} (Tomorrow)`}))} className="static-page-row"/>
+                </div>
+            );
+        };
+
+        // Settings Page - Corrected
+        const SettingsPage = () => {
+            const { currentUser, currentProfile, setCurrentProfile, dbService, navigate, logout, userSubscription, theme, toggleTheme, addAppNotification } = useContext(AppContext);
+            const [profiles, setProfiles] = useState([]);
+            const [editingProfile, setEditingProfile] = useState(null);
+            const [profileName, setProfileName] = useState('');
+            const [profileAvatar, setProfileAvatar] = useState('');
+            const [isChild, setIsChild] = useState(false);
+            const [parentalLevel, setParentalLevel] = useState('NC-17');
+            const [autoplayNext, setAutoplayNext] = useState(true);
+            const [defaultVideoQuality, setDefaultVideoQuality] = useState('auto');
+            const [preferredAudioLanguage, setPreferredAudioLanguage] = useState('en');
+            const [notifyNewEpisodes, setNotifyNewEpisodes] = useState(true);
+            const [notifyRecommendations, setNotifyRecommendations] = useState(true);
+            const [notifyLiveEvents, setNotifyLiveEvents] = useState(true);
+            const [notificationEmail, setNotificationEmail] = useState('');
+
+            const currentTierDetails = userSubscription ? dbService.getSubscriptionTierDetails(userSubscription.tier) : dbService.getSubscriptionTierDetails(SUBSCRIPTION_TIERS.BASIC.id);
+
+            useEffect(() => {
+                if (currentUser) {
+                    setProfiles(dbService.getProfiles(currentUser.id));
+                    if (!notificationEmail) setNotificationEmail(currentUser.email || '');
+                }
+                if (currentProfile) {
+                    if (!editingProfile || editingProfile.id !== currentProfile.id) {
+                        setEditingProfile(currentProfile); // currentProfile.preferences is an object
+                        setProfileName(currentProfile.profileName);
+                        setProfileAvatar(currentProfile.avatar || '');
+                        setIsChild(currentProfile.isChild === 1);
+                        const prefs = currentProfile.preferences || {};
+                        setParentalLevel(prefs.parentalControlLevel || currentProfile.parentalControlLevel || 'NC-17');
+                        setAutoplayNext(prefs.autoplayNext !== undefined ? prefs.autoplayNext : true);
+                        setDefaultVideoQuality(prefs.defaultVideoQuality || 'auto');
+                        setPreferredAudioLanguage(prefs.preferredAudioLanguage || 'en');
+                        setNotifyNewEpisodes(prefs.notifications?.newEpisodes !== undefined ? prefs.notifications.newEpisodes : true);
+                        setNotifyRecommendations(prefs.notifications?.recommendations !== undefined ? prefs.notifications.recommendations : true);
+                        setNotifyLiveEvents(prefs.notifications?.liveEvents !== undefined ? prefs.notifications.liveEvents : true);
+                        setNotificationEmail(prefs.notifications?.emailForNotifications || currentUser?.email || '');
+                    }
+                }
+            }, [currentUser, currentProfile, editingProfile, dbService, notificationEmail]);
+
+            const handleSelectProfileToEdit = (profile) => setEditingProfile(profile);
+
+            const handleSaveProfileSettings = (e) => {
+                e.preventDefault();
+                if (!editingProfile || !currentUser) return;
+                const updatedPreferencesObject = {
+                    ...(editingProfile.preferences || {}), theme: theme,
+                    parentalControlLevel: isChild ? (CONTENT_RATINGS_ORDER.includes(parentalLevel) && CONTENT_RATINGS_ORDER.indexOf(parentalLevel) <= CONTENT_RATINGS_ORDER.indexOf('PG-13') ? parentalLevel : 'PG') : parentalLevel,
+                    autoplayNext, defaultVideoQuality, preferredAudioLanguage,
+                    notifications: { newEpisodes: notifyNewEpisodes, recommendations: notifyRecommendations, liveEvents: notifyLiveEvents, emailForNotifications: notificationEmail }
+                };
+                const updatedProfileDataForDB = { profileName, avatar: profileAvatar || DEFAULT_AVATAR, isChild, preferences: updatedPreferencesObject };
+                const success = dbService.updateProfile(editingProfile.id, updatedProfileDataForDB);
+                if (success) {
+                    const updatedProfiles = dbService.getProfiles(currentUser.id); setProfiles(updatedProfiles);
+                    const newCurrentProfileContextData = updatedProfiles.find(p => p.id === editingProfile.id);
+                    if (newCurrentProfileContextData) {
+                        setCurrentProfile(newCurrentProfileContextData); // App's setCurrentProfile handles object/string prefs
+                        setEditingProfile(prev => ({...prev, ...newCurrentProfileContextData, preferences: (typeof newCurrentProfileContextData.preferences === 'string' ? JSON.parse(newCurrentProfileContextData.preferences) : newCurrentProfileContextData.preferences || {}) }));
+                    }
+                    addAppNotification("Settings updated successfully!", "success", 5000, "Settings Saved");
+                } else { addAppNotification("Failed to update profile.", "error"); }
+            };
+
+            const handleCreateNewProfile = () => {
+                 const newName = prompt("Enter new profile name (max 5 profiles):");
+                 if (newName && currentUser && profiles.length < 5) {
+                     const defaultPrefs = { theme: theme || 'dark', parentalControlLevel: 'NC-17', autoplayNext: true, defaultVideoQuality: 'auto', preferredAudioLanguage: 'en', notifications: { newEpisodes: true, recommendations: true, liveEvents: true, emailForNotifications: currentUser.email } };
+                     const success = dbService.createProfile(currentUser.id, newName, `https://picsum.photos/seed/${newName}/50/50`, false, 'NC-17', JSON.stringify(defaultPrefs)); // Pass parentalControlLevel directly too
+                     if (success) { setProfiles(dbService.getProfiles(currentUser.id)); addAppNotification(`Profile "${newName}" created.`, "success"); }
+                     else { addAppNotification(`Failed to create profile. Name might be taken.`, "error"); }
+                 } else if (profiles.length >= 5) { addAppNotification("Maximum of 5 profiles reached.", "warning"); }
+            };
+            const handleDeleteProfile = (profileIdToDelete) => {
+                if (profiles.length <= 1) { addAppNotification("Cannot delete the last profile.", "error"); return; }
+                const profileToDelete = profiles.find(p=>p.id === profileIdToDelete);
+                if (profileToDelete && confirm(`Delete profile "${profileToDelete.profileName}"?`)) {
+                    const success = dbService.deleteProfile(profileIdToDelete);
+                    if (success) {
+                        const remainingProfiles = dbService.getProfiles(currentUser.id); setProfiles(remainingProfiles);
+                        addAppNotification(`Profile "${profileToDelete.profileName}" deleted.`, "info");
+                        if (currentProfile.id === profileIdToDelete) { setCurrentProfile(remainingProfiles[0]); setEditingProfile(remainingProfiles[0]); }
+                        else if (editingProfile && editingProfile.id === profileIdToDelete) { setEditingProfile(remainingProfiles[0]); }
+                    } else { addAppNotification(`Failed to delete profile.`, "error"); }
+                }
+            };
+
+            if (!currentUser || !currentProfile || !editingProfile) return <div className="loading-spinner-container"><div className="loading-spinner"></div><p>Loading Settings...</p></div>;
+            return (
+                <div className="settings-page-container">
+                    <h1 className="page-title">Settings & Preferences</h1>
+                    <div className="settings-section">
+                        <h2><i className="fas fa-user-circle"></i>User Account</h2>
+                        <p><strong>Username:</strong> {currentUser.username}</p> <p><strong>Email:</strong> {currentUser.email}</p>
+                        <p><strong>Joined:</strong> {new Date(currentUser.createdAt).toLocaleDateString()}</p>
+                        <p><strong>Subscription:</strong> <span className={`subscription-badge ${currentTierDetails.id.toLowerCase()}`}>{currentTierDetails.name}</span> {userSubscription && userSubscription.endDate && ` (Ends: ${new Date(userSubscription.endDate).toLocaleDateString()})`}</p>
+                        <button className="general-button mt-1" onClick={() => navigate('#/subscription')} style={{backgroundColor:'var(--theme-secondary-color)'}}><i className="fas fa-credit-card"></i> Manage Subscription</button>
+                        <button onClick={logout} className="general-button mt-1" style={{marginLeft: '0.5rem', backgroundColor: 'var(--theme-text-muted)'}}><i className="fas fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                    <form onSubmit={handleSaveProfileSettings}>
+                        <div className="settings-section">
+                            <h2><i className="fas fa-users-cog"></i>Manage Profiles ({profiles.length}/5)</h2>
+                            <div style={{display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap'}}>
+                                {profiles.map(p => (
+                                    <button type="button" key={p.id} onClick={() => handleSelectProfileToEdit(p)} className="general-button"
+                                        style={{borderColor: editingProfile?.id === p.id ? 'var(--theme-primary-color)' : 'var(--theme-border-color)', borderWidth: '2px', borderStyle:'solid', padding: '0.5rem 0.8rem', backgroundColor: editingProfile?.id === p.id ? 'var(--theme-primary-color)' : 'var(--theme-card-background)', color: editingProfile?.id === p.id ? '#fff' : 'var(--theme-text-color)'}}>
+                                        <img src={p.avatar || DEFAULT_AVATAR} alt={p.profileName} style={{width:24, height:24, borderRadius:'50%', marginRight: '0.3rem', verticalAlign:'middle'}}/>
+                                        {p.profileName} {p.isChild ? '(Child)' : ''}
+                                    </button>
+                                ))}
+                                {profiles.length < 5 && <button type="button" onClick={handleCreateNewProfile} className="general-button"><i className="fas fa-plus"></i> Add Profile</button>}
+                            </div>
+                            {editingProfile && ( <>
+                                <h3>Editing: "{editingProfile.profileName}"</h3>
+                                <div className="settings-form-group"><label htmlFor="profileName">Profile Name</label><input type="text" id="profileName" value={profileName} onChange={e => setProfileName(e.target.value)} required /></div>
+                                <div className="settings-form-group"><label htmlFor="profileAvatar">Avatar URL</label><input type="text" id="profileAvatar" value={profileAvatar} onChange={e => setProfileAvatar(e.target.value)} /></div>
+                                <div className="settings-form-group"><label><input type="checkbox" checked={isChild} onChange={e => setIsChild(e.target.checked)} /> Child Profile</label></div>
+                                <div className="settings-form-group"><label htmlFor="parentalLevel">Max Content Rating</label>
+                                    <select id="parentalLevel" value={parentalLevel} onChange={e => setParentalLevel(e.target.value)} disabled={isChild && CONTENT_RATINGS_ORDER.indexOf(parentalLevel) > CONTENT_RATINGS_ORDER.indexOf('PG-13')}>
+                                        {CONTENT_RATINGS_ORDER.map(r => (<option key={r} value={r} disabled={isChild && CONTENT_RATINGS_ORDER.indexOf(r) > CONTENT_RATINGS_ORDER.indexOf('PG-13')}>{r}</option>))}
+                                    </select>
+                                    {isChild && CONTENT_RATINGS_ORDER.indexOf(parentalLevel) > CONTENT_RATINGS_ORDER.indexOf('PG-13') && <small className="text-primary d-block mt-1">Child profiles cannot exceed PG-13.</small>}
+                                </div>
+                                {profiles.length > 1 && editingProfile.id && <button type="button" onClick={() => handleDeleteProfile(editingProfile.id)} className="general-button" style={{marginRight: '0.5rem', backgroundColor: '#D32F2F', opacity:0.9}}><i className="fas fa-trash-alt"></i> Delete This Profile</button> }
+                            </> )}
+                        </div>
+                        {editingProfile && <>
+                            <div className="settings-section">
+                                <h2><i className="fas fa-play-circle"></i>Playback (for "{editingProfile.profileName}")</h2>
+                                <div className="settings-form-group"><label><input type="checkbox" checked={autoplayNext} onChange={e => setAutoplayNext(e.target.checked)} /> Autoplay Next Episode</label></div>
+                                <div className="settings-form-group"><label htmlFor="defaultVideoQuality">Default Video Quality</label><select id="defaultVideoQuality" value={defaultVideoQuality} onChange={e => setDefaultVideoQuality(e.target.value)}><option value="auto">Auto</option><option value="1080p">1080p</option><option value="720p">720p</option><option value="480p">480p</option></select></div>
+                                <div className="settings-form-group"><label htmlFor="preferredAudioLanguage">Preferred Audio Language</label><select id="preferredAudioLanguage" value={preferredAudioLanguage} onChange={e => setPreferredAudioLanguage(e.target.value)}><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option></select></div>
+                            </div>
+                            <div className="settings-section">
+                                <h2><i className="fas fa-bell"></i>Notifications (for "{editingProfile.profileName}")</h2>
+                                <div className="settings-form-group"><label htmlFor="notificationEmail">Notification Email</label><input type="email" id="notificationEmail" value={notificationEmail} onChange={e => setNotificationEmail(e.target.value)} /></div>
+                                <div className="settings-form-group"><label><input type="checkbox" checked={notifyNewEpisodes} onChange={e => setNotifyNewEpisodes(e.target.checked)} /> New Episode Alerts</label></div>
+                                <div className="settings-form-group"><label><input type="checkbox" checked={notifyRecommendations} onChange={e => setNotifyRecommendations(e.target.checked)} /> Personalized Recommendations</label></div>
+                                <div className="settings-form-group"><label><input type="checkbox" checked={notifyLiveEvents} onChange={e => setNotifyLiveEvents(e.target.checked)} /> Live Event Reminders</label></div>
+                                <p className="placeholder-info">Notifications are simulated in this demo.</p>
+                            </div>
+                            <div className="settings-section text-center"><button type="submit" className="general-button" style={{padding: '0.8rem 2rem', fontSize: '1.1rem'}}><i className="fas fa-save"></i> Save All Settings for "{editingProfile.profileName}"</button></div>
+                        </>}
+                    </form>
+                    <div className="settings-section">
+                        <h2><i className="fas fa-palette"></i>Global Theme</h2>
+                        <p>Current theme: <strong>{theme}</strong>.</p>
+                        <button onClick={toggleTheme} className="general-button" style={{backgroundColor:'var(--theme-secondary-color)'}}><i className={`fas fa-${theme === 'dark' ? 'sun' : 'moon'}`}></i> Switch to {theme === 'dark' ? 'Light' : 'Dark'}</button>
+                        <div className="placeholder-info mt-1"><strong>Adaptive UI (Future).</strong></div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SubscriptionPage = () => {
+            const { currentUser, userSubscription, navigate, setShowPaymentModal, setSelectedTierForPayment } = useContext(AppContext);
+            if (!currentUser) { useEffect(() => { navigate("#/"); }, [navigate]); return null; }
+            const currentTierId = userSubscription?.tier || SUBSCRIPTION_TIERS.BASIC.id;
+            const handleChoosePlan = (tier) => { if (tier.id === currentTierId) return; setSelectedTierForPayment(tier); setShowPaymentModal(true); };
+
+            return (
+                <div className="subscription-page-container page-container">
+                    <h1 className="page-title">Streamverse Subscription Plans</h1>
+                    <p style={{textAlign:'center', color:'var(--theme-text-muted)', marginBottom:'1.5rem'}}>Choose your plan. Payments are simulated.</p>
+                    <div className="subscription-tiers">
+                        {Object.values(SUBSCRIPTION_TIERS).map(tier => (
+                            <div key={tier.id} className={`subscription-card ${tier.id.toLowerCase()}`}>
+                                <h3>{tier.name}</h3>
+                                <p className="price">${tier.pricePerMonth.toFixed(2)}<span>/month</span></p>
+                                <p style={{fontSize:'0.8em', color:'var(--theme-text-muted'}}>(or ${tier.pricePerYear.toFixed(2)}/year)</p>
+                                {currentTierId === tier.id && (<p className="current-plan-indicator"><i className="fas fa-check-circle"></i> Current Plan</p> )}
+                                <ul>{tier.features.map((feature, index) => ( <li key={index}><i className="fas fa-check"></i> {feature}</li> ))}</ul>
+                                <button className="general-button" onClick={() => handleChoosePlan(tier)} disabled={currentTierId === tier.id} style={currentTierId === tier.id ? {backgroundColor: 'var(--theme-text-muted)', cursor:'default'} : (tier.id === 'Premium' ? {backgroundColor:'var(--premium-color)'} : tier.id === 'Professional' ? {backgroundColor:'var(--professional-color)'} : {})}>
+                                    {currentTierId === tier.id ? 'Your Current Plan' : `Choose ${tier.name}`}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                     <div className="placeholder-info mt-2" style={{maxWidth: '700px', margin: '2rem auto'}}><strong>AI-Driven Subscription Offers (Future).</strong></div>
+                </div>
+            );
+        };
+
+        const PaymentModal = ({ closeModal, tier }) => {
+            const { currentUser, dbService, refreshSubscription, navigate } = useContext(AppContext);
+            const [paymentMethod, setPaymentMethod] = useState('card');
+            const [cardNumber, setCardNumber] = useState(''); const [expiryDate, setExpiryDate] = useState('');
+            const [cvv, setCvv] = useState(''); const [cardName, setCardName] = useState('');
+            const [isProcessing, setIsProcessing] = useState(false); const [error, setError] = useState('');
+            const [successMessage, setSuccessMessage] = useState('');
+
+            if (!tier || !currentUser) return null;
+            const handlePaymentSubmit = async (e) => {
+                e.preventDefault(); setError(''); setSuccessMessage('');
+                if (paymentMethod === 'card') {
+                    if (!cardNumber || !expiryDate || !cvv || !cardName) { setError("Fill card details."); return; }
+                    if (cardNumber.replace(/\s/g, '').length < 13 || !/^\d+$/.test(cardNumber.replace(/\s/g, ''))) { setError("Invalid card number."); return; }
+                    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(expiryDate)) { setError("Invalid expiry (MM/YY)."); return; }
+                    if (!/^\d{3,4}$/.test(cvv)) { setError("Invalid CVV."); return; }
+                }
+                setIsProcessing(true);
+                setTimeout(() => {
+                    const paymentGateway = paymentMethod === 'card' ? 'SimulatedCard' : 'SimulatedGooglePay';
+                    const transactionId = `SIM_${Date.now()}`;
+                    const subSuccess = dbService.setUserSubscription(currentUser.id, tier.id, 30, paymentGateway, transactionId);
+                    if (subSuccess) {
+                        refreshSubscription();
+                        setSuccessMessage(`Subscribed to ${tier.name}! Payment $${tier.pricePerMonth.toFixed(2)} processed.`);
+                        setTimeout(() => { closeModal(); navigate('#/settings'); }, 3000);
+                    } else { setError("Subscription update failed. Contact support."); }
+                    setIsProcessing(false);
+                }, 2500);
+            };
+            const formatCardNumber = (v) => v.replace(/\s?/g, '').replace(/(\d{4})/g, '$1 ').trim();
+            const formatExpiryDate = (v) => { const c = v.replace(/[^\d]/g, ''); return c.length >= 2 ? `${c.slice(0,2)}/${c.slice(2,4)}` : c; };
+
+            return (
+                <div className="modal-overlay" onClick={isProcessing ? null : closeModal}>
+                    <div className="modal-content payment-modal-content" onClick={e => e.stopPropagation()}>
+                        {!isProcessing && !successMessage && <button className="modal-close-btn" onClick={closeModal}><i className="fas fa-times"></i></button>}
+                        <h2 className="modal-title">Complete Subscription</h2>
+                        {successMessage ? (
+                             <div style={{textAlign:'center', padding:'2rem 0'}}>
+                                <i className="fas fa-check-circle" style={{fontSize:'3rem', color:'var(--theme-primary-color)', marginBottom:'1rem'}}></i>
+                                <h3 style={{fontFamily:'var(--theme-font-heading)', color:'var(--theme-text-color)'}}>Payment Successful!</h3>
+                                <p className="modal-success" style={{fontSize:'1rem'}}>{successMessage}</p><p>Redirecting...</p>
+                            </div>
+                        ) : ( <>
+                                <div className="order-summary"><h4>Order Summary</h4><p><span>Plan:</span> <strong>{tier.name}</strong></p><p><span>Price:</span> <strong>${tier.pricePerMonth.toFixed(2)} / month</strong></p><p style={{fontSize:'0.8em', color:'var(--theme-text-muted)'}}>Simulated payment. No real charges.</p></div>
+                                <div className="payment-method-selection">
+                                    <button className={`payment-method-btn ${paymentMethod === 'card' ? 'active' : ''}`} onClick={() => setPaymentMethod('card')} disabled={isProcessing}><i className="fas fa-credit-card"></i> Card</button>
+                                    <button className={`payment-method-btn ${paymentMethod === 'googlepay' ? 'active' : ''}`} onClick={() => setPaymentMethod('googlepay')} disabled={isProcessing}><i className="fab fa-google-pay"></i> Google Pay</button>
+                                </div>
+                                {error && <p className="modal-error">{error}</p>}
+                                <form className="modal-form" onSubmit={handlePaymentSubmit}>
+                                    {paymentMethod === 'card' && ( <>
+                                        <input type="text" placeholder="Cardholder Name" value={cardName} onChange={e => setCardName(e.target.value)} required disabled={isProcessing} />
+                                        <input type="tel" placeholder="Card Number" value={formatCardNumber(cardNumber)} onChange={e => setCardNumber(e.target.value)} maxLength="19" required disabled={isProcessing} />
+                                        <div className="payment-form-group">
+                                            <input type="tel" placeholder="MM/YY" value={formatExpiryDate(expiryDate)} onChange={e => setExpiryDate(e.target.value)} maxLength="5" required disabled={isProcessing} />
+                                            <input type="tel" placeholder="CVV" value={cvv} onChange={e => setCvv(e.target.value)} maxLength="4" required disabled={isProcessing} />
+                                        </div>
+                                        <button type="submit" className="general-button" disabled={isProcessing}>{isProcessing ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : `Pay $${tier.pricePerMonth.toFixed(2)}`}</button>
+                                    </> )}
+                                    {paymentMethod === 'googlepay' && ( <div className="google-pay-btn-container">
+                                        <button type="submit" className="google-pay-btn" disabled={isProcessing}>{isProcessing ? <><i className="fas fa-spinner fa-spin"></i> Processing...</> : <><img src="https://www.gstatic.com/images/wallet/button/gpay_button_logo_black_1x.png" alt="GPay" /> Pay $${tier.pricePerMonth.toFixed(2)}</>}</button>
+                                        <p style={{fontSize:'0.8em', color:'var(--theme-text-muted)', marginTop:'0.5rem'}}>Simulates Google Pay.</p>
+                                    </div> )}
+                                </form>
+                                <div className="placeholder-info mt-1"><strong>Real Payment Systems:</strong> PCI Compliance, Tokenization, Fraud Detection.</div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const Footer = () => (
+            <footer className="footer">
+                <p>&copy; {new Date().getFullYear()} Streamverse v2.0. All rights reserved.</p>
+                <p>Developed by <a href="https://bit.ly/slogantechnologies">Slogan Technologies</a>>.</p>
+                <div className="placeholder-info mt-1" style={{maxWidth:'600px', margin:'1rem auto', fontSize:'0.75em', textAlign:'left'}}><strong>Ethical AI & Sustainability.</strong></div>
+            </footer>
+        );
+
+        const AppNotificationDisplay = () => {
+            const { appNotifications, dismissAppNotification } = useContext(AppContext);
+            if (!appNotifications || appNotifications.length === 0) return null;
+            const getIconClass = (type) => {
+                switch (type) {
+                    case 'success': return 'fas fa-check-circle'; case 'error': return 'fas fa-times-circle';
+                    case 'warning': return 'fas fa-exclamation-triangle'; default: return 'fas fa-info-circle';
+                }
+            };
+            return (
+                <div className="app-notification-container">
+                    {appNotifications.map(n => (
+                        <div key={n.id} className={`app-notification ${n.type}`}>
+                            <i className={`app-notification-icon ${getIconClass(n.type)}`}></i>
+                            <div className="app-notification-content">
+                                {n.title && <strong>{n.title}</strong>} <p>{n.message}</p>
+                            </div>
+                            <button className="app-notification-dismiss" onClick={() => dismissAppNotification(n.id)} title="Dismiss"><i className="fas fa-times"></i></button>
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        // Main App Component - Corrected Structure
+        const App = () => {
+            const { route, navigate } = useRoute();
+            const [isLoading, setIsLoading] = useState(true);
+            const [currentUser, setCurrentUser] = useState(null);
+            const [currentProfile, _setCurrentProfile] = useState(null);
+            const [showAuthModal, setShowAuthModal] = useState(false);
+            const [showProfileModal, setShowProfileModal] = useState(false);
+            const [favorites, setFavorites] = useState([]);
+            const [theme, setTheme] = useState(localStorage.getItem('streamverseThemeV2') || 'dark');
+            const [userSubscription, setUserSubscriptionState] = useState(null);
+            const [showPaymentModal, setShowPaymentModal] = useState(false);
+            const [selectedTierForPayment, setSelectedTierForPayment] = useState(null);
+            const [appNotifications, setAppNotifications] = useState([]);
+
+            const setCurrentProfile = useCallback((profile) => {
+                let processedProfile = profile;
+                if (processedProfile) {
+                    localStorage.setItem('streamverseLastProfileIdV2', processedProfile.id);
+                    let profilePrefsObject = {};
+                    if (processedProfile.preferences) {
+                        if (typeof processedProfile.preferences === 'string') {
+                            try { profilePrefsObject = JSON.parse(processedProfile.preferences); if (profilePrefsObject === null || typeof profilePrefsObject !== 'object') profilePrefsObject = {}; }
+                            catch (e) { console.error("Error parsing prefs string:", e); profilePrefsObject = {}; }
+                        } else if (typeof processedProfile.preferences === 'object' && processedProfile.preferences !== null) profilePrefsObject = processedProfile.preferences;
+                    }
+                    if(typeof profilePrefsObject !== 'object' || profilePrefsObject === null) profilePrefsObject = {};
+                    processedProfile = { ...processedProfile, preferences: profilePrefsObject };
+                    const newTheme = profilePrefsObject.theme || theme;
+                    setTheme(newTheme); document.body.setAttribute('data-theme', newTheme); document.body.className = newTheme === 'light' ? 'light-theme' : ''; localStorage.setItem('streamverseThemeV2', newTheme);
+                } else { localStorage.removeItem('streamverseLastProfileIdV2'); }
+                _setCurrentProfile(processedProfile);
+            }, [theme]); // theme dependency for fallback
+
+            const refreshSubscription = useCallback(() => {
+                if (currentUser) { const sub = dbService.getUserSubscription(currentUser.id); setUserSubscriptionState(sub); }
+                else { setUserSubscriptionState(null); }
+            }, [currentUser]);
+
+            const addAppNotification = useCallback((message, type = 'info', duration = 7000, title = '') => {
+                const id = Date.now() + Math.random(); const newNotification = { id, message, type, title };
+                setAppNotifications(prev => [newNotification, ...prev]);
+                if (duration > 0) { setTimeout(() => { setAppNotifications(prev => prev.filter(n => n.id !== id)); }, duration); }
+            }, []);
+
+            const dismissAppNotification = useCallback((id) => { setAppNotifications(prev => prev.filter(n => n.id !== id)); }, []);
+
+            useEffect(() => {
+                const init = async () => {
+                    await dbService.initDb();
+                    const storedUser = localStorage.getItem('streamverseUserV2');
+                    if (storedUser) {
+                        try {
+                            const parsedUser = JSON.parse(storedUser); setCurrentUser(parsedUser);
+                            const lastProfileId = localStorage.getItem('streamverseLastProfileIdV2');
+                            const userProfiles = dbService.getProfiles(parsedUser.id);
+                            if (lastProfileId && userProfiles.some(p => p.id == lastProfileId)) { setCurrentProfile(userProfiles.find(p => p.id == lastProfileId)); }
+                            else if (userProfiles.length > 0) { setShowProfileModal(true); }
+                            else { setShowProfileModal(true); }
+                        } catch (e) { console.error("Error parsing stored user:", e); localStorage.removeItem('streamverseUserV2'); localStorage.removeItem('streamverseLastProfileIdV2'); }
+                    }
+                    setIsLoading(false); const spinner = document.querySelector('.loading-spinner-container'); if (spinner) spinner.style.display = 'none';
+                };
+                init();
+                document.body.setAttribute('data-theme', theme); document.body.className = theme === 'light' ? 'light-theme' : '';
+            }, [setCurrentProfile, theme]); // Added setCurrentProfile, theme to initial load deps
+
+            useEffect(() => { if (currentUser) refreshSubscription(); else setUserSubscriptionState(null); }, [currentUser, refreshSubscription]);
+
+            useEffect(() => {
+                if (currentProfile) {
+                    const parentalLevel = currentProfile.preferences?.parentalControlLevel || currentProfile.parentalControlLevel || 'NC-17';
+                    setFavorites(dbService.getFavorites(currentProfile.id, parentalLevel));
+                } else { setFavorites([]); }
+            }, [currentProfile]);
+
+            useEffect(() => {
+                if (currentUser && currentProfile && currentProfile.preferences?.notifications?.newEpisodes) {
+                    const parentalLevel = currentProfile.preferences?.parentalControlLevel || currentProfile.parentalControlLevel || 'NC-17';
+                    const watchedShows = dbService.getWatchHistory(currentProfile.id, 5, parentalLevel).filter(v => v.type === 'TV Show');
+                    if (watchedShows.length > 0) {
+                        const aWatchedShow = watchedShows[Math.floor(Math.random() * watchedShows.length)];
+                        const potentialNewEpisodes = dbService.getVideos(5, 0, parentalLevel, 'TV Show');
+                        if (potentialNewEpisodes.length > 0) {
+                            const lastNote = localStorage.getItem(`lastNewEpNote_${potentialNewEpisodes[0].id}`); const now = Date.now();
+                            if(!lastNote || (now - parseInt(lastNote)) > (8 * 3600000) ) { // Reduced to 8 hours for demo
+                                if (Math.random() < 0.3) { // Increased chance for demo
+                                    addAppNotification( `New: "${potentialNewEpisodes[0].title}" (related to "${aWatchedShow.title}")`, 'info', 12000, "New Episode Alert!" );
+                                    localStorage.setItem(`lastNewEpNote_${potentialNewEpisodes[0].id}`, now.toString());
+                                }
+                            }
+                        }
+                    }
+                }
+            }, [currentUser, currentProfile, addAppNotification]);
+
+            const login = (user) => { setCurrentUser(user); localStorage.setItem('streamverseUserV2', JSON.stringify(user)); setShowProfileModal(true); };
+            const logout = () => { setCurrentUser(null); setCurrentProfile(null); setUserSubscriptionState(null); localStorage.removeItem('streamverseUserV2'); localStorage.removeItem('streamverseLastProfileIdV2'); setFavorites([]); navigate('#/'); };
+            const toggleFavorite = (videoId) => {
+                if (!currentProfile) { setShowAuthModal(true); return; }
+                const isCurrentlyFavorite = favorites.some(fav => fav.id === videoId);
+                const parentalLevel = currentProfile.preferences?.parentalControlLevel || currentProfile.parentalControlLevel || 'NC-17';
+                if (isCurrentlyFavorite) dbService.removeFavorite(currentProfile.id, videoId); else dbService.addFavorite(currentProfile.id, videoId);
+                setFavorites(dbService.getFavorites(currentProfile.id, parentalLevel));
+            };
+            const toggleTheme = () => {
+                const newTheme = theme === 'dark' ? 'light' : 'dark'; setTheme(newTheme);
+                document.body.setAttribute('data-theme', newTheme); document.body.className = newTheme === 'light' ? 'light-theme' : ''; localStorage.setItem('streamverseThemeV2', newTheme);
+                if (currentProfile) {
+                    const updatedPrefsObject = { ...(currentProfile.preferences || {}), theme: newTheme };
+                    dbService.updateProfile(currentProfile.id, { ...currentProfile, preferences: updatedPrefsObject });
+                    _setCurrentProfile(prev => ({ ...prev, preferences: updatedPrefsObject }));
+                }
+            };
+
+            let CurrentPage;
+            if (route.startsWith('#/player/')) CurrentPage = PlayerPage; else if (route.startsWith('#/search')) CurrentPage = SearchResultsPage;
+            else if (route.startsWith('#/settings')) CurrentPage = SettingsPage; else if (route.startsWith('#/tv')) CurrentPage = TVShowsPage;
+            else if (route.startsWith('#/movies')) CurrentPage = MoviesPage; else if (route.startsWith('#/live')) CurrentPage = LivePage;
+            else if (route.startsWith('#/subscription')) CurrentPage = SubscriptionPage; else CurrentPage = HomePage;
+            if (route.startsWith('#/subscription') && !currentUser) { CurrentPage = () => { useEffect(() => { navigate('#/'); setShowAuthModal(true); }, [navigate, setShowAuthModal]); return null; }; }
+
+            if (isLoading) return ( <div className="loading-spinner-container"><div className="loading-spinner"></div><p>Igniting Streamverse...</p></div> );
+            return (
+                <AppContext.Provider value={{ currentUser, currentProfile, setCurrentProfile, login, logout, showAuthModal, setShowAuthModal, showProfileModal, setShowProfileModal, favorites, toggleFavorite, dbService, navigate, theme, toggleTheme, userSubscription, refreshSubscription, showPaymentModal, setShowPaymentModal, selectedTierForPayment, setSelectedTierForPayment, appNotifications, addAppNotification, dismissAppNotification }}>
+                    <Navbar />
+                    <main style={{ flexGrow: 1, paddingTop: '70px' }}><CurrentPage /></main>
+                    <AppNotificationDisplay />
+                    <Footer />
+                    {showAuthModal && <AuthModal closeModal={() => setShowAuthModal(false)} />}
+                    {showProfileModal && currentUser && <ProfileModal user={currentUser} closeModal={() => setShowProfileModal(false)} />}
+                    {showPaymentModal && selectedTierForPayment && currentUser && <PaymentModal tier={selectedTierForPayment} closeModal={() => { setShowPaymentModal(false); setSelectedTierForPayment(null); }} />}
+                </AppContext.Provider>
+            );
+        }; // End of App Component
+
+        const RootComponent = () => ( <RouterProvider><App /></RouterProvider> );
+        ReactDOM.createRoot(document.getElementById('root')).render(<RootComponent />);
+    </script>
+</body>
+</html>
